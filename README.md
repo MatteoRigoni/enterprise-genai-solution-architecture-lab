@@ -1,39 +1,46 @@
 # AI Solution Architect – Enterprise GenAI Portfolio
 
-> **Role focus:** AI Solution Architect  
-> **Stack:** .NET 10, ASP.NET Core, Blazor, Azure-first (provider-agnostic)  
-> **Mindset:** Production-grade AI systems (governance, cost, security, observability)
+<div align="center">
 
----
+<p><strong>Role focus:</strong> AI Solution Architect • <strong>Stack:</strong> .NET 10, ASP.NET Core, Blazor, Azure-first (provider-agnostic)</p>
 
-## Executive Summary
 
-This repository showcases an **enterprise-grade AI Solution Architecture** built end-to-end with a production mindset.  
+<img src="https://img.shields.io/badge/Architecture-Enterprise%20GenAI-4C1" alt="Enterprise GenAI" />
+<img src="https://img.shields.io/badge/Focus-Governance%20%7C%20Cost%20%7C%20Security-0ea5e9" alt="Governance badge" />
+
+</div>
+
+
+## 🚀 Executive Summary
+
+This repository showcases an **enterprise-grade AI Solution Architecture** built end-to-end with a production mindset.
 It goes beyond demos and focuses on **real-world constraints**: governance, compliance, cost control, observability, and measurable business value.
 
 The project demonstrates how to design, build, and operate **Generative AI systems** responsibly in an enterprise context.
 
----
+<hr>
 
-## What This Project Is (and Is Not)
+## 🎯 What This Project Is
 
-### ✅ This project **is**
 - A full **AI platform blueprint** (not just a chatbot)
-- Designed with **architectural decision records (ADR)**
+- Designed with **Architectural Decision Records (ADR)**
 - Governed, observable, cost-controlled, and compliant
 - Built to explain *why* decisions were made, not only *how*
 
-### ❌ This project is **not**
+## 🚫 What This Project Is Not
+
 - A toy demo
 - A pure ML research project
 - A framework comparison playground
 - A UI-centric showcase
 
----
+<hr>
 
-## High-Level Architecture
+## 🏗️ High-Level Architecture
 
-**Core components:**
+<details open>
+<summary><strong>Core components</strong></summary>
+
 - **Blazor Portal** (UI + navigation)
 - **ASP.NET Core API** (Minimal APIs)
 - **RAG Pipeline** with pluggable vector stores
@@ -42,15 +49,21 @@ The project demonstrates how to design, build, and operate **Generative AI syste
 - **Observability & Cost Control**
 - **Governance, Security & Compliance Layer**
 
-**Design principles:**
+</details>
+
+<details open>
+<summary><strong>Design principles</strong></summary>
+
 - Provider-agnostic LLM interface
 - Azure-first, but portable
 - Small, reviewable changes
 - Explicit trade-offs documented via ADRs
 
----
+</details>
 
-## Portal Navigation
+<hr>
+
+## 🧭 Portal Navigation
 
 The Blazor portal exposes each architectural concern as a first-class area:
 
@@ -63,55 +76,55 @@ The Blazor portal exposes each architectural concern as a first-class area:
 - **Security** – Threats, mitigations, compliance
 - **Admin** – Provider configuration & health checks
 
----
+<hr>
 
-## Key Architectural Capabilities
+## 🧩 Key Architectural Capabilities
 
-### Retrieval-Augmented Generation (RAG)
+### 📚 Retrieval-Augmented Generation (RAG)
 - Dual vector store support:
   - Azure AI Search
   - pgvector (PostgreSQL)
 - Chunking, embedding, citation enforcement
 - “I don’t know” behavior when ungrounded
 
-### Agentic AI (Controlled)
+### 🤖 Agentic AI (Controlled)
 - Planner + execution loop
 - Tool calling with strict allow-lists
 - Step/time/token limits
 - Full traceability per agent run
 
-### Evaluation & Quality
+### 🎯 Evaluation & Quality
 - Versioned evaluation datasets
 - Batch evaluation runner
 - Regression gates (CI-ready)
 - Metrics: answer rate, citation rate, latency
 
-### Observability
+### 🔍 Observability
 - OpenTelemetry traces and metrics
 - Request → Retrieval → LLM → Tool spans
 - SLO-driven thinking
 - Operational runbooks
 
-### Cost Control & FinOps
+### 💰 Cost Control & FinOps
 - Token accounting per request
 - Budget thresholds and graceful degradation
 - Cost-to-value metrics
 - FinOps-style decision making
 
-### Governance & Knowledge Management
+### 🛡️ Governance & Knowledge Management
 - Data classification and ingestion rules
 - Knowledge lifecycle (create → update → retire)
 - Explicit decisions on what **must not** be indexed
 
-### Security & Compliance
+### 🔒 Security & Compliance
 - Threat modeling (prompt injection, tool abuse, data leakage)
 - GDPR analysis (lawful basis, minimization)
 - EU AI Act risk classification
 - Incident response procedures
 
----
+<hr>
 
-## Business Perspective
+## 💼 Business Perspective
 
 This project explicitly connects **AI capabilities to business value**:
 
@@ -120,9 +133,9 @@ This project explicitly connects **AI capabilities to business value**:
 - Kill-criteria when AI does not justify cost or risk
 - Alignment with finance, legal, and security stakeholders
 
----
+<hr>
 
-## Architectural Documentation
+## 📑 Architectural Documentation
 
 - `docs/architecture.md` – System overview (C4 style)
 - `docs/adr/` – Architectural Decision Records
@@ -131,9 +144,9 @@ This project explicitly connects **AI capabilities to business value**:
 - `docs/cost-model.md` – Cost & FinOps strategy
 - `docs/runbooks/` – Operational procedures
 
----
+<hr>
 
-## Why This Portfolio Matters
+## 🌟 Why This Portfolio Matters
 
 Most AI portfolios show **what works**.
 
@@ -145,28 +158,19 @@ This one shows:
 
 This reflects how AI is actually delivered in **enterprise environments**.
 
----
+<hr>
 
-## Intended Audience
+## ⚖️ Disclaimer
 
-- CTOs and Chief Architects
-- AI / Cloud Solution Architects
-- Platform and Engineering Leads
-- Organizations deploying GenAI in regulated or cost-sensitive environments
-
----
-
-## Disclaimer
-
-This repository is an **architectural and educational showcase**.  
+This repository is an **architectural and educational showcase**.
 It is intentionally designed to prioritize **clarity, safety, and reasoning** over feature breadth or UI polish.
 
----
+<hr>
 
-## Contact / Profile
+## 🤝 Contact / Profile
 
-If you are reviewing this project in a professional context,  
-this repository represents my approach to **AI Solution Architecture**:  
+If you are reviewing this project in a professional context,
+this repository represents my approach to **AI Solution Architecture**:
 pragmatic, accountable, and production-ready.
 
----
+<hr>
