@@ -1,0 +1,8 @@
+---
+description: "Baseline: safety + small diffs"
+alwaysApply: true
+---
+- Keep diffs small. Do not change unrelated files.
+- Never log secrets, raw documents, user prompts, or PII. Log metadata only.
+- Always propose a plan before coding.
+- After coding: list files changed + exact verification commands.

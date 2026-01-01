@@ -1,0 +1,11 @@
+---
+description: "Enterprise GenAI architecture constraints and conventions."
+alwaysApply: false
+---
+- This repo is an enterprise GenAI Solution Architecture lab.
+- Host is .NET 10 ASP.NET Core + Blazor. APIs under /api/*.
+- LLM access is provider-agnostic (OpenAI-style interface).
+- Vector store supports Azure AI Search and pgvector (toggle via config).
+- Tool calling is allow-listed and validated.
+- Agent loop must enforce max steps/time/tokens and be observable.
+- Every major decision requires an ADR.

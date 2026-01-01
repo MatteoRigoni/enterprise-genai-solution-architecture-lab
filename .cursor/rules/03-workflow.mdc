@@ -1,0 +1,15 @@
+---
+description: "Engineering workflow: plan first, implement stepwise, verify, summarize, note risks."
+alwaysApply: false
+---
+Before coding:
+- Propose a plan (steps + files touched + tests).
+- List assumptions if anything is ambiguous.
+
+During coding:
+- Implement step by step pausing between each one.
+
+After coding:
+- Summarize diff (bullets).
+- Provide exact verification commands.
+- Call out risks explicitly.
