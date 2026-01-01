@@ -10,6 +10,11 @@ Automate build + tests + basic eval smoke.
   - run EvalRunner smoke on small dataset (10 qs)
   - upload eval report artifact
 - Add guidance for branch protection.
+- Release strategy (documentation):
+  - Deployment slots for zero-downtime (Azure App Service)
+  - Feature flags mention (for toggling agent/tools in production)
+  - Rollback procedure (slot swap back)
+  - Canary deployment as future extension
 
 ## Acceptance Criteria
 - CI runs on PR and main.

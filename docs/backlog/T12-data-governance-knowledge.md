@@ -9,6 +9,13 @@ Ensure the knowledge base is controlled, auditable, and safe to use in GenAI.
 - Ingestion rules:
   - what can be indexed
   - required metadata (owner, source, last updated, retention class)
+  - Approval workflow for Confidential classification:
+    - require approval flag + approver metadata
+    - audit trail of who approved what
+  - Role-based access control:
+    - who can ingest (operators)
+    - who can approve Confidential (admins/owners)
+  - DLP mention: pattern matching for secrets/PII during ingestion (reject if detected)
 - Retention & deletion policy:
   - how to delete vectors/chunks when source is removed
 - Lineage:

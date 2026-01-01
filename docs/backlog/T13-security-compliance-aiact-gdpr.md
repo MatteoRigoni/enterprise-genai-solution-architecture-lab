@@ -8,7 +8,14 @@ Make the system legally and ethically defensible with concrete artifacts.
   - data minimization (no raw prompts/docs in logs)
   - lawful basis (internal use vs customer use)
   - retention policy alignment (tie to T12)
-  - data subject rights considerations (if applicable)
+  - data subject rights (DSR) process:
+    - deletion request handling (link to governance deletion process)
+    - user-associated data removal procedure
+    - evidence/documentation
+- Data residency:
+  - Azure region configuration (Key Vault, storage, compute)
+  - geo-replication considerations (if applicable)
+  - compliance with data localization requirements
 - AI Act (EU):
   - risk categorization (high-level)
   - documentation obligations (system description, intended use, limitations)
@@ -18,9 +25,12 @@ Make the system legally and ethically defensible with concrete artifacts.
   - data exfiltration
   - tool abuse
   - agent loop runaway
-- Incident response:
-  - what to do for data leak suspicion
-  - what to do for prompt injection abuse
+- Incident response (AI-specific):
+  - Prompt injection abuse: detect pattern, terminate agent, log security event, review tool calls
+  - Data leak suspicion: verify logs (no raw data), check tool outputs, review agent decisions, escalate
+  - Cost explosion: see runbook incident-cost-spike.md
+  - LLM degradation/SLO violation: see runbook incident-llm-degradation.md
+  - Red teaming: periodic security testing process (document procedure, not implementation)
 
 ## Deliverables
 - docs/compliance.md (GDPR + AI Act mapping in plain language)

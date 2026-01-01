@@ -16,6 +16,9 @@ Create an evaluation pipeline to measure RAG quality and prevent regressions.
   - Answered (not "I don't know") rate
   - Citation presence rate
   - Latency stats
+  - Safety metrics (via eval dataset with ground truth):
+    - Hallucination detection (answer contradicts ground truth)
+    - Citation accuracy (cited doc actually contains answer)
 - Portal Evaluations page:
   - show latest report summary + “Run smoke eval” button
 
@@ -30,6 +33,7 @@ Create an evaluation pipeline to measure RAG quality and prevent regressions.
 - eval/README.md + datasets + reports
 - src/AiSa.Host: Evaluations page + endpoint /api/eval/run
 - docs/adr: update ADR-0005 if needed
+- docs/quality.md: mention dataset drift detection (compare eval reports over time)
 
 ## DoD
 - EvalRunner works end-to-end

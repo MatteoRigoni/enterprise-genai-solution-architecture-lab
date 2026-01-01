@@ -12,6 +12,12 @@ Add tool calling with strict controls, and a security test suite (prompt injecti
 - Validate tool outputs (max length, redaction).
 - Maintain injection tests:
   - 10 prompts attempting to override system, exfiltrate docs, call forbidden tools, etc.
+- Content moderation (optional pre-processing):
+  - Basic filter for toxic/inappropriate content (can be LLM-based or pattern-based)
+  - Log moderation events (no raw content, only metadata)
+- Audit trail for tool calls:
+  - Log structured events: tool name, args hash, outcome, timestamp
+  - No raw payloads in logs (security boundary)
 - Update docs/security.md mapping mitigations.
 
 ## Acceptance Criteria
@@ -36,5 +42,6 @@ Add tool calling with strict controls, and a security test suite (prompt injecti
 
 ## Sources (passive)
 - OWASP Top 10 for LLM Applications (prompt injection & tool abuse)
-- YouTube: “Prompt injection attacks”
+- YouTube: "Prompt injection attacks"
 - Docs: OpenAI function calling concepts (even if provider-agnostic)
+- Model Context Protocol (MCP): future consideration for standardized tool/context access

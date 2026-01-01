@@ -15,12 +15,16 @@ Make the system operable: traces, metrics, logs (safe), and actionable runbooks.
   - chat_latency_ms (histogram)
   - tokens_in/out
   - estimated_cost
+  - retriever_precision/recall (aggregated from eval, not real-time)
+  - security_events_total (tool calls blocked, unsafe requests detected)
 - Portal Observability page:
   - recent request summaries (safe)
+  - security events summary (blocked tool calls, unsafe agent terminations)
   - links to runbooks
 - Write 2 runbooks:
   - latency incident
   - cost spike incident
+- Add runbook: incident-llm-degradation.md (SLO violations, fallback strategies)
 
 ## Acceptance Criteria
 - Each chat request produces correlated trace with child spans.

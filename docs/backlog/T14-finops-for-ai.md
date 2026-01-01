@@ -8,6 +8,13 @@ Move from “token tracking” to real FinOps: cost-to-value governance and deci
   - cost per request
   - cost per successful answer (from eval)
   - cost per tool-assisted resolution
+- Chargeback/Showback:
+  - metadata tagging for costs (team, user, feature)
+  - portal visualization of cost allocation
+  - export capability for billing integration (future)
+- Spend forecasting:
+  - trend analysis (simple moving average)
+  - budget projection based on current spend rate
 - Define budget policies:
   - daily budget
   - per-user budget
@@ -16,6 +23,7 @@ Move from “token tracking” to real FinOps: cost-to-value governance and deci
   - caching strategy (from T07)
   - retrieval tuning (top-k, rerank) vs cost
   - prompt minimization
+  - SLO-driven degradation: reduce quality (topK, disable rerank) to meet cost SLOs when needed
 - Portal FinOps page:
   - show cost trends and cost-to-value ratios (simple table is fine)
 - Create FinOps playbook:
