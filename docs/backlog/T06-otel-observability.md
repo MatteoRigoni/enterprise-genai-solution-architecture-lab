@@ -49,3 +49,11 @@ Make the system operable: traces, metrics, logs (safe), and actionable runbooks.
 - OpenTelemetry .NET documentation (tracing/metrics)
 - YouTube: “Observability vs monitoring” + “OpenTelemetry in .NET”
 - Book (free): Google SRE concepts (SLO/SLI)
+
+### Related context
+- docs/architecture.md
+- docs/runbooks/incident-latency.md
+- docs/runbooks/incident-cost-spike.md
+- docs/quality.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0007-finops-budgeting.md

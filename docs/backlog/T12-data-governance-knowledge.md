@@ -55,3 +55,10 @@ Upload doc with classification=Internal -> show metadata visible in Admin/Govern
 - DAMA-DMBOK (concetti: data governance, data quality, metadata)
 - YouTube: “Data governance for GenAI / RAG”
 - Articles: “Knowledge lifecycle management” (KM principles)
+
+### Related context
+- docs/governance.md
+- docs/compliance.md
+- docs/security.md
+- docs/architecture.md
+- docs/adr/0004-telemetry-policy.md

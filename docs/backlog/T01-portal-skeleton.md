@@ -36,3 +36,12 @@ Have a working portal with navigation and a Chat page calling /api/chat, using a
 - Microsoft Learn: Blazor fundamentals + routing/layout
 - YouTube: “Blazor .NET 8 Web App tutorial”
 - Docs: ASP.NET Core Minimal APIs basics
+
+### Related context
+- docs/architecture.md
+- docs/ui-portal.md
+- docs/ui-styleguide.md
+- docs/quality.md
+- docs/adr/0001-hosting-model.md
+- docs/adr/0002-llm-provider-abstraction.md
+- docs/adr/0004-telemetry-policy.md

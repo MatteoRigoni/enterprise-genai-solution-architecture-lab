@@ -68,3 +68,12 @@ Add an agent mode that can solve multi-step requests via planning + safe tool ex
 - YouTube: “What are AI agents really? (tool-calling vs agent loop)”
 - Docs: LangGraph / AutoGen concepts (planner, state, tool routing)
 - OWASP: agent/tool risks & mitigations (prompt injection, tool abuse)
+
+### Related context
+- docs/architecture.md
+- docs/security.md
+- docs/governance.md
+- docs/quality.md
+- docs/adr/0002-llm-provider-abstraction.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0006-agent-loop-constraints.md

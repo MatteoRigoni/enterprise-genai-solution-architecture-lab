@@ -37,3 +37,9 @@ Open PR with breaking change -> CI fails
 - GitHub Actions official docs (workflow syntax)
 - YouTube: “CI for .NET GitHub Actions”
 - Blog: quality gates for AI systems
+
+### Related context
+- docs/quality.md
+- docs/architecture.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0005-eval-strategy.md

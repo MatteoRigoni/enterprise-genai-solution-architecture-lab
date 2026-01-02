@@ -35,3 +35,11 @@ Support a second vector store (pgvector) and allow switching via config; include
 - pgvector official documentation
 - YouTube: “Vector DB vs Postgres pgvector”
 - Blog: “Avoiding vendor lock-in in GenAI”
+
+### Related context
+- docs/architecture.md
+- docs/cost-model.md
+- docs/finops.md
+- docs/adr/0001-hosting-model.md
+- docs/adr/0003-vectorstore-dual.md
+- docs/adr/0007-finops-budgeting.md

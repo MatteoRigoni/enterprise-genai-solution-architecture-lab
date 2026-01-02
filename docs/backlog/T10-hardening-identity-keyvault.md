@@ -34,3 +34,11 @@ Remove secret -> Admin shows missing -> add -> green
 - Microsoft docs: Managed Identity patterns
 - YouTube: “Key Vault + App Service managed identity”
 - Docs: least privilege / RBAC basics
+
+### Related context
+- docs/security.md
+- docs/compliance.md
+- docs/governance.md
+- docs/architecture.md
+- docs/adr/0001-hosting-model.md
+- docs/adr/0004-telemetry-policy.md

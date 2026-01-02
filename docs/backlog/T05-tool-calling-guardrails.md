@@ -45,3 +45,12 @@ Add tool calling with strict controls, and a security test suite (prompt injecti
 - YouTube: "Prompt injection attacks"
 - Docs: OpenAI function calling concepts (even if provider-agnostic)
 - Model Context Protocol (MCP): future consideration for standardized tool/context access
+
+### Related context
+- docs/security.md
+- docs/compliance.md
+- docs/architecture.md
+- docs/quality.md
+- docs/adr/0002-llm-provider-abstraction.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0006-agent-loop-constraints.md

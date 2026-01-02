@@ -48,3 +48,10 @@ Create an evaluation pipeline to measure RAG quality and prevent regressions.
 - YouTube: “How to evaluate RAG systems”
 - Docs/blog: “LLM evaluation and regression testing”
 - GitHub: OpenAI eval patterns (concepts)
+
+### Related context
+- docs/quality.md
+- docs/architecture.md
+- docs/security.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0005-eval-strategy.md

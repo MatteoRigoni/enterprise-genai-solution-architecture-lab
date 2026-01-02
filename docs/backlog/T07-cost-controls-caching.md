@@ -39,3 +39,12 @@ Prevent surprise bills and improve performance with caching.
 - YouTube: “Token cost optimization strategies”
 - Docs: Azure OpenAI / LLM pricing + rate limits (concepti)
 - Blog: caching patterns for RAG
+
+### Related context
+- docs/finops.md
+- docs/cost-model.md
+- docs/quality.md
+- docs/security.md
+- docs/runbooks/incident-cost-spike.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0007-finops-budgeting.md

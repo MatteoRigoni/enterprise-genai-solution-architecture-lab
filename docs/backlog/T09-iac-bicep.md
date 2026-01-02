@@ -34,3 +34,11 @@ Deploy dev infra -> see resources created
 - Microsoft Learn: Bicep fundamentals + modules
 - YouTube: “Bicep end-to-end deployment”
 - Docs: App Service + Key Vault deployment patterns
+
+### Related context
+- docs/architecture.md
+- docs/security.md
+- docs/governance.md
+- infra/README.md
+- docs/adr/0001-hosting-model.md
+- docs/adr/0003-vectorstore-dual.md

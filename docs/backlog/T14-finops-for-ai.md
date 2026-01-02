@@ -61,3 +61,10 @@ Show a scenario: agent success rate goes up but cost doubles -> interpret and de
 - FinOps Foundation (core principles)
 - YouTube: “FinOps for cloud” + “FinOps for GenAI”
 - Articles: “Cost-to-serve for LLM applications”
+
+### Related context
+- docs/finops.md
+- docs/cost-model.md
+- docs/business_case.md
+- docs/quality.md
+- docs/adr/0007-finops-budgeting.md

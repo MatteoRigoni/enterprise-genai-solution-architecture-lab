@@ -64,3 +64,13 @@ Answer to stakeholder: “How do you prevent data leakage and comply with GDPR?�
 - YouTube: “GDPR for software engineers (practical)”
 - EU AI Act summaries (official/credible explainers)
 - OWASP Top 10 for LLM Applications (threat categories)
+
+### Related context
+- docs/security.md
+- docs/compliance.md
+- docs/governance.md
+- docs/architecture.md
+- docs/runbooks/incident-cost-spike.md
+- docs/runbooks/incident-latency.md
+- docs/adr/0004-telemetry-policy.md
+- docs/adr/0006-agent-loop-constraints.md

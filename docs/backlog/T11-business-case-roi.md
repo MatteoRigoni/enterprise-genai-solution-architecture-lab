@@ -45,3 +45,10 @@ Translate the system into measurable business value and a defendable ROI story.
 - YouTube: “How to calculate ROI for AI projects”
 - Articles: frameworks for AI value measurement (McKinsey/Bain style, concetti)
 - Book: “Lean AI” (principi di validazione e value delivery)
+
+### Related context
+- docs/business_case.md
+- docs/cost-model.md
+- docs/finops.md
+- docs/quality.md
+- docs/adr/0007-finops-budgeting.m

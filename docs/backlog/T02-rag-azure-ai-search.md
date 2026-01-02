@@ -47,3 +47,12 @@ Implement ingestion and retrieval using Azure AI Search as vector store, and sho
 - Microsoft Learn: Azure AI Search vector search + semantic ranking
 - YouTube: “RAG architecture explained”
 - Blog: “Chunking strategies for RAG”
+
+### Related context
+- docs/architecture.md
+- docs/governance.md
+- docs/quality.md
+- docs/security.md
+- docs/adr/0002-llm-provider-abstraction.md
+- docs/adr/0003-vectorstore-dual.md
+- docs/adr/0004-telemetry-policy.md

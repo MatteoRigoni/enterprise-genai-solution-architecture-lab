@@ -7,3 +7,11 @@ Each ticket must end with:
 - DoD checklist completed
 - Commit message referencing ticket id
 - Sources list consulted (short notes)
+
+### Related context
+- docs/architecture.md
+- docs/quality.md
+- docs/security.md
+- docs/governance.md
+- docs/adr/0001-hosting-model.md
+- docs/adr/0004-telemetry-policy.md
