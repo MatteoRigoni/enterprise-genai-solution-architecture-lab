@@ -96,6 +96,23 @@
 
 /* Transitions */
 .transition-base {
-  transition: all 150ms ease-out;
+    transition: all 150ms ease-out;
+}
+
+/* Page Content Container */
+.page-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+    min-height: 100%;
+}
+
+/* Surface Hero Typography */
+.surface-hero .text-title {
+    margin-bottom: var(--s-3);
+}
+
+.surface-hero .text-body {
+    margin-top: var(--s-2);
 }
 

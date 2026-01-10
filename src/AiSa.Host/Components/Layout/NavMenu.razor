@@ -1,30 +1,58 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">AiSa.Host</a>
+﻿<nav class="sidebar-nav">
+    <div class="sidebar-brand">
+        <h2 class="text-section">AiSa Portal</h2>
     </div>
-</div>
+    
+    <div class="nav-menu">
+        <NavLink class="nav-item" href="/" Match="NavLinkMatch.All">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </NavLink>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+        <NavLink class="nav-item" href="/chat">
+            <span class="nav-icon">💬</span>
+            <span>Chat</span>
+        </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+        <NavLink class="nav-item" href="/agent">
+            <span class="nav-icon">🤖</span>
+            <span>Agent</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+        <NavLink class="nav-item" href="/documents">
+            <span class="nav-icon">📄</span>
+            <span>Documents</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+        <NavLink class="nav-item" href="/evaluations">
+            <span class="nav-icon">✅</span>
+            <span>Evaluations</span>
+        </NavLink>
+
+        <NavLink class="nav-item" href="/observability">
+            <span class="nav-icon">📊</span>
+            <span>Observability</span>
+        </NavLink>
+
+        <NavLink class="nav-item" href="/cost">
+            <span class="nav-icon">💰</span>
+            <span>Cost</span>
+        </NavLink>
+
+        <NavLink class="nav-item" href="/governance">
+            <span class="nav-icon">🛡️</span>
+            <span>Governance</span>
+        </NavLink>
+
+        <NavLink class="nav-item" href="/security-compliance">
+            <span class="nav-icon">🔒</span>
+            <span>Security/Compliance</span>
+        </NavLink>
+
+        <NavLink class="nav-item" href="/admin">
+            <span class="nav-icon">⚙️</span>
+            <span>Admin</span>
+        </NavLink>
+    </div>
+</nav>
 
