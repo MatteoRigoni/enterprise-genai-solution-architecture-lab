@@ -17,10 +17,8 @@ public class ChatService : IChatService
 
     public async Task<ChatResponse> ProcessChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Message))
-        {
-            throw new ArgumentException("Message cannot be null or empty.", nameof(request));
-        }
+        // Input validation is handled at the API endpoint level (Program.cs) to return proper ProblemDetails.
+        // This method assumes valid input and focuses on business logic.
 
         // Retrieve correlation ID from Activity Baggage (automatically propagated from parent span in /api/chat)
         // This ensures all child spans (retrieval.query, llm.generate, etc.) see the same correlation ID
