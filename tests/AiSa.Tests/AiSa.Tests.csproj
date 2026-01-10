@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\AiSa.Application\AiSa.Application.csproj" />
     <ProjectReference Include="..\..\src\AiSa.Domain\AiSa.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AiSa.Infrastructure\AiSa.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

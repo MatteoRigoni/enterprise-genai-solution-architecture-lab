@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AiSa.Application.Models;
 
 namespace AiSa.Application;
@@ -21,8 +22,12 @@ public class ChatService : IChatService
             throw new ArgumentException("Message cannot be null or empty.", nameof(request));
         }
 
-        // Generate correlation ID if not provided
-        var correlationId = request.CorrelationId ?? System.Diagnostics.Activity.Current?.Id ?? Guid.NewGuid().ToString();
+        // Retrieve correlation ID from Activity Baggage (automatically propagated from parent span in /api/chat)
+        // This ensures all child spans (retrieval.query, llm.generate, etc.) see the same correlation ID
+        var correlationId = Activity.Current?.GetBaggageItem("correlation.id")
+            ?? request.CorrelationId
+            ?? Activity.Current?.Id
+            ?? Guid.NewGuid().ToString();
 
         // Call LLM to generate response
         var response = await _llmClient.GenerateAsync(request.Message, cancellationToken);

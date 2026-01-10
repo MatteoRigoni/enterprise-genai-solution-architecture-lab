@@ -64,21 +64,33 @@ app.MapRazorComponents<App>()
 // API Endpoints
 app.MapPost("/api/chat", async (ChatRequest request, IChatService chatService, CancellationToken cancellationToken) =>
 {
+    // Generate or use correlation ID (server-side generation for reliability)
+    var correlationId = request.CorrelationId 
+        ?? Activity.Current?.Id 
+        ?? Guid.NewGuid().ToString();
+    
     // Create telemetry span named "chat.request" (ADR-0004: no raw prompts in logs, only metadata)
     using var activity = activitySource.StartActivity("chat.request");
-    activity?.SetTag("chat.request.message_length", request.Message?.Length ?? 0);
-    activity?.SetTag("chat.request.has_correlation_id", request.CorrelationId != null);
+    
+    // Set correlation ID in Activity Baggage for automatic propagation to all child spans
+    // This ensures correlation ID is available in retrieval.query, llm.generate, etc. without manual passing
+    activity?.SetBaggage("correlation.id", correlationId);
+    
+    // Low-cardinality tags only (ADR-0004 compliant: metadata, not raw content)
+    activity?.SetTag("chat.message.length", request.Message?.Length ?? 0);
+    activity?.SetTag("chat.request.has_client_correlation_id", request.CorrelationId != null);
+    activity?.SetTag("correlation.id", correlationId); // Single tag for filtering/searching (also in Baggage for propagation)
 
-    var startTime = DateTime.UtcNow;
+    // Use Stopwatch for high-precision duration measurement (immune to clock adjustments)
+    var stopwatch = Stopwatch.StartNew();
 
     try
     {
         var response = await chatService.ProcessChatAsync(request, cancellationToken);
 
-        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
-        activity?.SetTag("chat.request.duration_ms", duration);
-        activity?.SetTag("chat.request.success", true);
-        activity?.SetTag("chat.response.correlation_id", response.CorrelationId);
+        stopwatch.Stop();
+        activity?.SetTag("chat.duration_ms", stopwatch.ElapsedMilliseconds);
+        activity?.SetTag("chat.success", true);
         activity?.SetTag("chat.response.length", response.Response?.Length ?? 0);
         activity?.SetStatus(ActivityStatusCode.Ok);
 
@@ -86,10 +98,10 @@ app.MapPost("/api/chat", async (ChatRequest request, IChatService chatService, C
     }
     catch (Exception ex)
     {
-        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
-        activity?.SetTag("chat.request.duration_ms", duration);
-        activity?.SetTag("chat.request.success", false);
-        activity?.SetTag("chat.request.error_type", ex.GetType().Name);
+        stopwatch.Stop();
+        activity?.SetTag("chat.duration_ms", stopwatch.ElapsedMilliseconds);
+        activity?.SetTag("chat.success", false);
+        activity?.SetTag("chat.error.type", ex.GetType().Name); // Low cardinality (exception type name)
         activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 
         // Log only metadata, not raw user prompts (ADR-0004)
