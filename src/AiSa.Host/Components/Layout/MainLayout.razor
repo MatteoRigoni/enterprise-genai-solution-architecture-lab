@@ -1,18 +1,22 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
+<div class="app-shell">
     <div class="sidebar">
         <NavMenu />
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    <div class="top-bar">
+        <div class="top-bar-content">
+            <h1 class="text-label top-bar-title">AiSa Portal</h1>
         </div>
+    </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="main-content">
+        <div class="content-container">
+            <div class="page-container">
+                @Body
+            </div>
+        </div>
     </main>
 </div>
 

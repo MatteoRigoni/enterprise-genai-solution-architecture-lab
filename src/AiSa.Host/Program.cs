@@ -1,10 +1,14 @@
 using AiSa.Host.Components;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add Fluent UI Blazor
+builder.Services.AddFluentUIComponents();
 
 var app = builder.Build();
 

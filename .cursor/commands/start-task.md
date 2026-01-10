@@ -34,7 +34,7 @@ Deliverables for this message:
 6) Exact git commands to run (branch create + first commit placeholders), but DO NOT execute them Branch naming rules: - feature/TXX-short-slug (e.g., feature/T06A-agent-orchestration) Commit message rules: - feat(TXX): ... - chore(TXX): ... - fix(TXX): ...
 
 Execution protocol (mandatory):
-- After you output the plan that i can copy/paste in a .md file, STOP.
+- After you output the plan in backlog/plans folder, STOP.
 - Wait for my message "Implement TXX.A" before writing any code.
 - When I ask to implement a sub-task, implement ONLY that sub-task with max 300–400 LOC changed.
 - End implementation messages with: modified files + exact verification commands + suggested git commit message.
