@@ -1,11 +1,53 @@
 @page "/chat"
+@rendermode InteractiveServer
 
 <PageTitle>Chat</PageTitle>
 
-<div class="page-content">
-    <div class="surface-hero">
+<div class="chat-page">
+    <div class="chat-header">
         <h1 class="text-title">Chat</h1>
-        <p class="text-body">Coming soon - Chat interface will be implemented here.</p>
+        <p class="text-label">Chat with the AI assistant</p>
+    </div>
+
+    <div class="chat-messages">
+        @if (!messages.Any())
+        {
+            <div class="chat-empty-state">
+                <p class="text-body">No messages yet. Start a conversation below.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var message in messages)
+            {
+                <div class="chat-message @message.CssClass">
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-role">@message.Role</span>
+                            @if (!string.IsNullOrEmpty(message.CorrelationId))
+                            {
+                                <span class="message-correlation-id">ID: @message.CorrelationId</span>
+                            }
+                        </div>
+                        <div class="message-text">@message.Text</div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="chat-input-area">
+        <FluentTextField @bind-Value="currentMessage" 
+                         Placeholder="Type your message here and press Enter or click Send..." 
+                         class="chat-input"
+                         disabled="@isSending">
+        </FluentTextField>
+        <FluentButton Appearance="Appearance.Accent" 
+                      OnClick="HandleSend"
+                      disabled="@(string.IsNullOrWhiteSpace(currentMessage) || isSending)"
+                      class="chat-send-button">
+            <span>📤</span> Send
+        </FluentButton>
     </div>
 </div>
 
