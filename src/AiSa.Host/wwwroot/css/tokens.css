@@ -25,9 +25,9 @@
   --accent-tertiary: #9db4f3; /* tertiary accent */
   --accent-primary-alpha: rgba(91, 141, 239, 0.15); /* accent-primary with 15% opacity for active nav items */
 
-  /* Shadows - Same for both themes */
-  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.2); /* subtle elevation */
-  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.3); /* card elevation */
+  /* Shadows - Same for both themes - Fluent Design style (lighter, more subtle) */
+  --shadow-1: 0 1px 4px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08); /* subtle elevation */
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.1); /* card elevation */
 
   /* Glow - Same for both themes */
   --glow-primary: radial-gradient(circle at center, rgba(91, 141, 239, 0.1) 0%, transparent 70%);
