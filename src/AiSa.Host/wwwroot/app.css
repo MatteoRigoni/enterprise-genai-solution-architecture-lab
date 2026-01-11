@@ -1,9 +1,13 @@
-/* App.css - Imports + Minimal Overrides */
-/* Import order: tokens → layout → components */
+/* App.css - Minimal Overrides */
+/* CSS files are imported directly in App.razor to avoid @import issues */
+/* Order: tokens.css → layout.css → components.css → app.css */
 
-@import url('css/tokens.css');
-@import url('css/layout.css');
-@import url('css/components.css');
+/* Body styling - uses custom tokens, allows theme switching */
+body {
+  background-color: var(--bg-0);
+  color: var(--text-0);
+  transition: background-color 200ms ease-out, color 200ms ease-out;
+}
 
 /* Minimal Overrides - Only when absolutely necessary */
 

@@ -1,11 +1,14 @@
-// Program.cs
 using System.Diagnostics;
+using System.Security.Claims;
 using AiSa.Application;
-using AiSa.Application.Models;
 using AiSa.Host;
 using AiSa.Host.Components;
+using AiSa.Host.Endpoints;
+using AiSa.Host.Middleware;
+using AiSa.Host.Services;
 using AiSa.Infrastructure;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.FluentUI.AspNetCore.Components;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -17,6 +20,24 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddFluentUIComponents();
+
+// Fake Authentication (Cookie-based, for demo purposes)
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, 
+    Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider>();
+
+// UI services
+builder.Services.AddScoped<ILoadingService, LoadingService>();
+builder.Services.AddScoped<IToastNotificationService, ToastNotificationService>();
 
 // App services
 builder.Services.AddScoped<ILLMClient, MockLLMClient>();
@@ -58,7 +79,8 @@ builder.Services.AddProblemDetails(options =>
             ctx.ProblemDetails.Instance = http.Request.Path;
         }
 
-        if (env.IsDevelopment() && ctx.Exception is not null)
+        // Development mode: add exception details to ProblemDetails
+        if (http.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment() && ctx.Exception is not null)
         {
             ctx.ProblemDetails.Extensions["exceptionType"] = ctx.Exception.GetType().FullName;
             ctx.ProblemDetails.Extensions["exceptionMessage"] = ctx.Exception.Message;
@@ -68,6 +90,19 @@ builder.Services.AddProblemDetails(options =>
 
 // Global exception handler for API endpoints
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddValidation();
+
+// OpenAPI/Swagger documentation
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "AiSa API",
+        Version = "v1",
+        Description = "Enterprise GenAI Solution Architecture Lab - API Documentation"
+    });
+});
 
 // OpenTelemetry tracing (avoid capturing request/response bodies)
 builder.Services.AddOpenTelemetry()
@@ -91,7 +126,21 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAntiforgery();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapStaticAssets();
+
+// Swagger UI - Only in Development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "AiSa API v1");
+        options.RoutePrefix = "swagger"; // Swagger UI at /swagger
+    });
+}
 
 // API pipeline: ProblemDetails for exceptions and for non-success status codes (e.g., 404)
 app.UseWhen(
@@ -121,76 +170,36 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // API endpoints
-var api = app.MapGroup("/api");
+app.MapChatEndpoints();
 
-api.MapPost("/chat", async (
-        ChatRequest request,
-        IChatService chatService,
-        ActivitySource activitySource,
-        HttpContext httpContext,
-        CancellationToken cancellationToken) =>
+// Fake Login/Logout endpoints (for demo purposes)
+app.MapGet("/Account/Login", async (HttpContext context) =>
+{
+    var claims = new List<Claim>
     {
-        // Minimal input validation as a 400 (ProblemDetails is still RFC7807)
-        if (string.IsNullOrWhiteSpace(request.Message))
-        {
-            return Results.Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Bad Request",
-                detail: "The request is invalid. Please check your input and try again.");
-        }
+        new(ClaimTypes.Name, "Utente Demo"),
+        new(ClaimTypes.Email, "utente.demo@aisa.com"),
+        new("name", "Utente Demo")
+    };
+    
+    var identity = new ClaimsIdentity(claims, "Cookies");
+    var principal = new ClaimsPrincipal(identity);
+    
+    await context.SignInAsync("Cookies", principal);
+    
+    return Results.Redirect("/");
+});
 
-        // Child span for application work; the incoming HTTP span already exists
-        using var activity = activitySource.StartActivity("chat.handle", ActivityKind.Internal);
-
-        // Low-cardinality metadata only (avoid logging raw prompts)
-        activity?.SetTag("chat.message.length", request.Message.Length);
-
-        var response = await chatService.ProcessChatAsync(request, cancellationToken);
-
-        activity?.SetTag("chat.response.length", response.Response?.Length ?? 0);
-        activity?.SetStatus(ActivityStatusCode.Ok);
-
-        return Results.Ok(response);
-    })
-    .WithName("ChatApi");
+app.MapGet("/Account/Logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync("Cookies");
+    return Results.Redirect("/");
+});
 
 app.Run();
 
-internal static class Correlation
+// Make Program class accessible for WebApplicationFactory in integration tests
+namespace AiSa.Host
 {
-    public const string HeaderName = "X-Correlation-ID";
-    public const string CorrelationIdItemKey = "correlation.id";
-}
-
-/// <summary>
-/// Ensures every API request has a correlation id available to logs/traces and returned in the response header.
-/// </summary>
-internal sealed class CorrelationIdMiddleware
-{
-    private readonly RequestDelegate _next;
-
-    public CorrelationIdMiddleware(RequestDelegate next) => _next = next;
-
-    public async Task InvokeAsync(HttpContext context)
-    {
-        var correlationId =
-            context.Request.Headers.TryGetValue(Correlation.HeaderName, out var headerVal) &&
-            !string.IsNullOrWhiteSpace(headerVal.ToString())
-                ? headerVal.ToString()
-                : Guid.NewGuid().ToString("N");
-
-        context.Items[Correlation.CorrelationIdItemKey] = correlationId;
-        context.Response.Headers[Correlation.HeaderName] = correlationId;
-
-        // Propagate correlation ID to OpenTelemetry Activity for distributed tracing
-        // Activity.Current may be null if tracing is disabled or not yet initialized
-        var activity = Activity.Current;
-        if (activity is not null)
-        {
-            activity.SetBaggage(Correlation.CorrelationIdItemKey, correlationId);
-            activity.SetTag(Correlation.CorrelationIdItemKey, correlationId);
-        }
-
-        await _next(context);
-    }
+    public partial class Program { }
 }

@@ -1,0 +1,23 @@
+@using Microsoft.FluentUI.AspNetCore.Components
+@implements IDialogContentComponent<object>
+
+<div class="admin-panel-content">
+    <h2 class="admin-panel-title">Admin</h2>
+    <hr class="admin-panel-divider" />
+    <p class="text-body">Coming soon - Administration and configuration interface will be implemented here.</p>
+</div>
+
+@code {
+    public object Content { get; set; } = new();
+
+    public Task OnDialogOpenAsync(DialogParameters parameters)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<DialogResult> OnDialogCloseAsync()
+    {
+        return Task.FromResult(DialogResult.Ok<object>(null!));
+    }
+}
+

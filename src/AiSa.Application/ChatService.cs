@@ -22,8 +22,8 @@ public class ChatService : IChatService
 
         // Retrieve correlation ID from Activity Baggage (automatically propagated from parent span in /api/chat)
         // This ensures all child spans (retrieval.query, llm.generate, etc.) see the same correlation ID
+        // Correlation ID is managed by CorrelationIdMiddleware via HTTP header X-Correlation-ID
         var correlationId = Activity.Current?.GetBaggageItem("correlation.id")
-            ?? request.CorrelationId
             ?? Activity.Current?.Id
             ?? Guid.NewGuid().ToString();
 

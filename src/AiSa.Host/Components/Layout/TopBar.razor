@@ -1,0 +1,324 @@
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components.DesignTokens
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
+@using System.Security.Claims
+@using AiSa.Host.Services
+@inject IJSRuntime JSRuntime
+@inject BaseLayerLuminance BaseLayerLuminance
+@inject IToastNotificationService ToastService
+@inject NavigationManager Navigation
+
+<div class="top-bar-center">
+    <FluentTextField @bind-Value="searchQuery" 
+                     Placeholder="Search models, tools, docs..." 
+                     @onkeydown="HandleSearchKeyDown"
+                     style="width: 100%; max-width: 500px;">
+        <FluentButton Appearance="Appearance.Stealth" 
+                     OnClick="HandleSearch"
+                     Title="Search (Enter)"
+                     class="search-icon-button"
+                     Slot="end">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Search())" />
+        </FluentButton>
+    </FluentTextField>
+</div>
+
+<div class="top-bar-right">
+    <div class="top-bar-actions">
+        <!-- Theme Toggle -->
+        <FluentButton Appearance="Appearance.Stealth" 
+                     OnClick="ToggleTheme"
+                     Title="@(isDarkMode ? "Switch to light mode" : "Switch to dark mode")"
+                     class="top-bar-icon-button">
+            <FluentIcon Value="@(isDarkMode ? new Icons.Regular.Size24.DarkTheme() : new Icons.Regular.Size24.DarkTheme())" />
+        </FluentButton>
+
+        <!-- Notifications -->
+        <FluentCounterBadge BackgroundColor="@Color.Error" 
+                            Color="@Color.Fill" 
+                            Dot="@(NotificationCount > 0)"
+                            class="notification-badge">
+        <FluentButton Appearance="Appearance.Stealth" 
+                     OnClick="ToggleNotifications"
+                     Title="Notifications"
+                     class="top-bar-icon-button notification-button">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Alert())" />
+        </FluentButton>
+        </FluentCounterBadge>
+
+        @if (isAuthenticated)
+        {
+            <!-- User Profile Menu (when logged in) -->
+            <FluentProfileMenu Initials="@userInitials" class="top-bar-profile-menu">
+                <StartTemplate>@userName</StartTemplate>
+                <HeaderTemplate>
+                    <FluentLabel Typo="@Typography.Header">Logged as</FluentLabel>
+                </HeaderTemplate>
+                <ChildContent>
+                    <div style="width: 250px; height: 60px">
+                        <FluentLabel Typo="@Typography.Header" Style="font-weight: bold;">@userName</FluentLabel>
+                        <FluentLabel>@userEmail</FluentLabel>
+                    </div>
+                    <FluentMenuItem style="width: 250px;" OnClick="HandleProfileClick">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Person())" />
+                        <span>Profile</span>
+                    </FluentMenuItem>
+                    <FluentMenuItem style="width: 250px;" OnClick="HandleSignOutClick">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.SignOut())" />
+                        <span>Sign Out</span>
+                    </FluentMenuItem>
+                </ChildContent>
+                        <FooterTemplate>
+            <FluentStack>
+                <FluentSpacer />
+            </FluentStack>
+        </FooterTemplate>
+            </FluentProfileMenu>
+        }
+        else
+        {
+            <!-- Sign In Button (when not logged in) -->
+            <FluentButton Appearance="Appearance.Stealth" 
+                          OnClick="HandleSignInClick"
+                          Class="sign-in-button">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Person())" class="sign-in-icon" />
+                <span style="position:relative; top:-6px;">
+                    Sign In
+                </span>
+            </FluentButton>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private bool isAuthenticated = false;
+    private string userName = "Guest";
+    private string userEmail = "";
+    private string userInitials = "G";
+    private string searchQuery = string.Empty;
+    
+    private bool isDarkMode => BaseLayerLuminance.Value <= 0.5f;
+    
+    private int _notificationCount = 0;
+    private int NotificationCount
+    {
+        get => _notificationCount;
+        set
+        {
+            if (_notificationCount != value)
+            {
+                _notificationCount = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserInfoAsync();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Sync BaseLayerLuminance with CSS classes (already set by inline script)
+            // Read the theme from CSS classes without changing them to avoid flash
+            try
+            {
+                var themeClass = await JSRuntime.InvokeAsync<string>("eval", @"
+                    (function() {
+                        const html = document.documentElement;
+                        if (html.classList.contains('theme-dark')) return 'dark';
+                        if (html.classList.contains('theme-light')) return 'light';
+                        return 'dark'; // default
+                    })();
+                ");
+                
+                // Only update BaseLayerLuminance if it doesn't match the CSS classes
+                var currentLuminance = BaseLayerLuminance.Value;
+                var expectedLuminance = themeClass == "dark" ? 0.15f : 1.0f;
+                
+                // Only change if different to avoid unnecessary re-renders
+                if (Math.Abs((currentLuminance ?? 0f) - expectedLuminance) > 0.01f)
+                {
+                    BaseLayerLuminance.Value = expectedLuminance;
+                }
+            }
+            catch
+            {
+                // If JS fails, use default - CSS classes should still be correct from inline script
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadUserInfoAsync();
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task LoadUserInfoAsync()
+    {
+        if (AuthenticationStateTask != null)
+        {
+            var authState = await AuthenticationStateTask;
+            isAuthenticated = authState?.User?.Identity?.IsAuthenticated ?? false;
+            
+            if (isAuthenticated)
+            {
+                userName = authState!.User.Identity.Name 
+                    ?? authState.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value 
+                    ?? "User";
+                userEmail = authState.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value 
+                    ?? authState.User.Claims.FirstOrDefault(c => c.Type == "email")?.Value 
+                    ?? "";
+                
+                // Generate initials
+                var nameParts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                userInitials = nameParts.Length >= 2 
+                    ? $"{nameParts[0][0]}{nameParts[1][0]}".ToUpper()
+                    : userName.Substring(0, Math.Min(2, userName.Length)).ToUpper();
+            }
+            else
+            {
+                userName = "Guest";
+                userEmail = "";
+                userInitials = "G";
+            }
+            
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleSignInClick()
+    {
+        // Redirect to fake login endpoint
+        Navigation.NavigateTo("/Account/Login", forceLoad: true);
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleSearch()
+    {
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            // TODO: Implement search logic
+            await Task.CompletedTask;
+        }
+    }
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleSearch();
+        }
+    }
+
+    private async Task SyncThemeClassesAsync()
+    {
+        // Sync CSS classes with BaseLayerLuminance value
+        var isDark = BaseLayerLuminance.Value <= 0.5f;
+        
+        await JSRuntime.InvokeVoidAsync("eval", @"
+            (function() {
+                const html = document.documentElement;
+                const body = document.body;
+                const isDark = " + isDark.ToString().ToLower() + @";
+                
+                // Remove both classes first from both html and body
+                html.classList.remove('theme-dark', 'theme-light');
+                body.classList.remove('theme-dark', 'theme-light');
+                
+                // Add the correct one to both
+                if (isDark) {
+                    html.classList.add('theme-dark');
+                    body.classList.add('theme-dark');
+                } else {
+                    html.classList.add('theme-light');
+                    body.classList.add('theme-light');
+                }
+            })();
+        ");
+    }
+
+    private async Task ToggleTheme()
+    {
+        // Toggle between dark (0.15) and light (1.0) theme
+        var newValue = isDarkMode ? 1.0f : 0.15f;
+        var isDark = newValue <= 0.5f;
+        
+        // Update BaseLayerLuminance
+        BaseLayerLuminance.Value = newValue;
+        
+        // Save theme preference to localStorage
+        var themeName = isDark ? "dark" : "light";
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "theme", themeName);
+        }
+        catch
+        {
+            // If localStorage is not available, continue without saving
+        }
+        
+        // Add/remove theme class on both html and body for CSS theming
+        await JSRuntime.InvokeVoidAsync("eval", @"
+            (function() {
+                const html = document.documentElement;
+                const body = document.body;
+                const isDark = " + isDark.ToString().ToLower() + @";
+                
+                // Remove both classes first from both html and body
+                html.classList.remove('theme-dark', 'theme-light');
+                body.classList.remove('theme-dark', 'theme-light');
+                
+                // Add the correct one to both
+                if (isDark) {
+                    html.classList.add('theme-dark');
+                    body.classList.add('theme-dark');
+                } else {
+                    html.classList.add('theme-light');
+                    body.classList.add('theme-light');
+                }
+            })();
+        ");
+        
+        StateHasChanged();
+    }
+
+    private async Task ToggleNotifications()
+    {
+        // Show toast indicating that notifications are not yet implemented
+        ToastService.ShowInfo(
+            "La funzionalità di notifiche sarà disponibile in una versione futura.",
+            "Notifiche non ancora implementate");
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleProfileClick()
+    {
+        // TODO: Navigate to profile page
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleSettingsClick()
+    {
+        // TODO: Navigate to settings page
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleSignOutClick()
+    {
+        Navigation.NavigateTo("/Account/Logout", forceLoad: true);
+        await Task.CompletedTask;
+    }
+}
+

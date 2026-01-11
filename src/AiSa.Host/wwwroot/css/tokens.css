@@ -1,7 +1,44 @@
 /* Design Tokens - Single Source of Truth */
-/* Dark Premium Dashboard Theme */
+/* Theme-aware design tokens that work with FluentUI BaseLayerLuminance */
 
 :root {
+  /* Spacing System (8px Grid) - Same for both themes */
+  --s-1: 8px;
+  --s-2: 16px;
+  --s-3: 24px;
+  --s-4: 32px;
+  --s-5: 40px;
+
+  /* Radius System - Same for both themes */
+  --r-1: 10px; /* small */
+  --r-2: 14px; /* medium */
+  --r-3: 18px; /* large */
+
+  /* Status - Same for both themes */
+  --success-0: #4ade80;
+  --warning-0: #fbbf24;
+  --danger-0: #f87171;
+
+  /* Accents - Same for both themes */
+  --accent-primary: #5b8def; /* primary accent color */
+  --accent-secondary: #7c9ef0; /* secondary accent */
+  --accent-tertiary: #9db4f3; /* tertiary accent */
+  --accent-primary-alpha: rgba(91, 141, 239, 0.15); /* accent-primary with 15% opacity for active nav items */
+
+  /* Shadows - Same for both themes */
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.2); /* subtle elevation */
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.3); /* card elevation */
+
+  /* Glow - Same for both themes */
+  --glow-primary: radial-gradient(circle at center, rgba(91, 141, 239, 0.1) 0%, transparent 70%);
+  --glow-secondary: radial-gradient(circle at center, rgba(124, 158, 240, 0.08) 0%, transparent 70%);
+}
+
+/* Dark Theme (default) - Maps to FluentUI native variables when possible */
+:root,
+:root.theme-dark,
+body.theme-dark,
+html.theme-dark {
   /* Backgrounds - Dark, soft contrast */
   --bg-0: #0f0f1a; /* primary page background */
   --bg-1: #1a1a2e; /* sidebar / secondary background */
@@ -16,35 +53,25 @@
   --text-0: #ffffff; /* primary text */
   --text-1: rgba(255, 255, 255, 0.8); /* secondary text */
   --text-2: rgba(255, 255, 255, 0.6); /* muted text */
+}
 
-  /* Accents */
-  --accent-primary: #5b8def; /* primary accent color */
-  --accent-secondary: #7c9ef0; /* secondary accent */
-  --accent-tertiary: #9db4f3; /* tertiary accent */
+/* Light Theme - Alternative values when theme is light */
+:root.theme-light,
+body.theme-light,
+html.theme-light {
+  /* Backgrounds - Light theme */
+  --bg-0: #fafafa; /* primary page background */
+  --bg-1: #f5f5f5; /* sidebar / secondary background */
+  --bg-2: #ffffff; /* elevated surfaces (cards) */
+  --bg-3: #ffffff; /* highest elevation surface (hero/banner) */
 
-  /* Status */
-  --success-0: #4ade80;
-  --warning-0: #fbbf24;
-  --danger-0: #f87171;
+  /* Borders */
+  --border-0: rgba(0, 0, 0, 0.1); /* default subtle border */
+  --border-1: rgba(0, 0, 0, 0.2); /* hover / focus border */
 
-  /* Spacing System (8px Grid) */
-  --s-1: 8px;
-  --s-2: 16px;
-  --s-3: 24px;
-  --s-4: 32px;
-  --s-5: 40px;
-
-  /* Radius System */
-  --r-1: 10px; /* small */
-  --r-2: 14px; /* medium */
-  --r-3: 18px; /* large */
-
-  /* Shadows */
-  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.2); /* subtle elevation */
-  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.3); /* card elevation */
-
-  /* Glow - Extremely subtle, decorative only */
-  --glow-primary: radial-gradient(circle at center, rgba(91, 141, 239, 0.1) 0%, transparent 70%);
-  --glow-secondary: radial-gradient(circle at center, rgba(124, 158, 240, 0.08) 0%, transparent 70%);
+  /* Text */
+  --text-0: #1a1a1a; /* primary text */
+  --text-1: rgba(0, 0, 0, 0.8); /* secondary text */
+  --text-2: rgba(0, 0, 0, 0.6); /* muted text */
 }
 

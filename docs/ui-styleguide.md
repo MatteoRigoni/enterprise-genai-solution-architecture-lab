@@ -70,6 +70,12 @@ The UI must feel:
   - create surface cards/panels
   - apply glow/shadow effects
 
+### Loading States (Centralized)
+**Note:** The application uses a centralized loading service (`ILoadingService`) with a global overlay component (`LoadingOverlay`) that displays `FluentProgressRing` during async operations. See `docs/loading-service-guide.md` for usage patterns and best practices. All loading states should use this service instead of local loading flags.
+
+### Toast Notifications (Centralized)
+**Note:** The application uses a centralized toast notification service (`IToastNotificationService`) that wraps Fluent UI's `IToastService`. The service provides convenience methods (`ShowSuccess`, `ShowInfo`, `ShowWarning`, `ShowError`) with consistent timeout defaults based on intent severity. Inject `IToastNotificationService` in components to display user-facing notifications. `FluentToastProvider` is already integrated in `MainLayout`.
+
 ---
 
 ## CSS Architecture (Mandatory)

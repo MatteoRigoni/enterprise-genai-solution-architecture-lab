@@ -6,16 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="@Assets["css/tokens.css"]" />
+    <link rel="stylesheet" href="@Assets["css/layout.css"]" />
+    <link rel="stylesheet" href="@Assets["css/components.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["AiSa.Host.styles.css"]" />
     <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <title>AiSa Portal - Enterprise GenAI Solution Architecture</title>
+    <link rel="icon" type="image/png" href="images/logo-app.png" />
     <HeadOutlet />
+    <script>
+        // Initialize theme from localStorage before Blazor loads to prevent flash
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('theme');
+                const theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+                document.documentElement.classList.remove('theme-dark', 'theme-light');
+                document.body.classList.remove('theme-dark', 'theme-light');
+                document.documentElement.classList.add('theme-' + theme);
+                document.body.classList.add('theme-' + theme);
+            } catch (e) {
+                // localStorage not available, use default dark theme
+                document.documentElement.classList.remove('theme-dark', 'theme-light');
+                document.body.classList.remove('theme-dark', 'theme-light');
+                document.documentElement.classList.add('theme-dark');
+                document.body.classList.add('theme-dark');
+            }
+        })();
+    </script>
 </head>
 
 <body>
-    <Routes />
+    <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     <FluentDesignTheme />

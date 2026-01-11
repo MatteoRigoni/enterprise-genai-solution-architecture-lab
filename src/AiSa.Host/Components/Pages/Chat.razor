@@ -34,6 +34,13 @@
                 </div>
             }
         }
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="chat-error">
+                <p class="text-body" style="color: var(--danger-0);">@errorMessage</p>
+            </div>
+        }
     </div>
 
     <div class="chat-input-area">

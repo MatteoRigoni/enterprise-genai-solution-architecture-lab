@@ -16,26 +16,6 @@ public class ChatServiceTests
         // Assert
         Assert.NotNull(request);
         Assert.Equal("Hello", request.Message);
-        Assert.Null(request.CorrelationId);
-    }
-
-    [Fact]
-    public void ChatRequest_CanBeInstantiated_WithCorrelationId()
-    {
-        // Arrange
-        var correlationId = Guid.NewGuid().ToString();
-
-        // Act
-        var request = new ChatRequest
-        {
-            Message = "Hello",
-            CorrelationId = correlationId
-        };
-
-        // Assert
-        Assert.NotNull(request);
-        Assert.Equal("Hello", request.Message);
-        Assert.Equal(correlationId, request.CorrelationId);
     }
 
     [Fact]

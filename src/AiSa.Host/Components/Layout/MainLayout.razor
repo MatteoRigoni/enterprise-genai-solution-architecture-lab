@@ -1,14 +1,16 @@
 ﻿@inherits LayoutComponentBase
 
+<FluentDialogProvider />
+<FluentToastProvider Position="ToastPosition.BottomRight" />
+<LoadingOverlay />
+
 <div class="app-shell">
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <div class="top-bar">
-        <div class="top-bar-content">
-            <h1 class="text-label top-bar-title">AiSa Portal</h1>
-        </div>
+        <TopBar />
     </div>
 
     <main class="main-content">

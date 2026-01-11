@@ -1,0 +1,40 @@
+@using AiSa.Host.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@implements IDisposable
+@inject ILoadingService LoadingService
+
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="loading-overlay-content">
+            <FluentProgressRing />
+            @if (!string.IsNullOrWhiteSpace(loadingMessage))
+            {
+                <p class="loading-message">@loadingMessage</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading;
+    private string? loadingMessage;
+
+    protected override void OnInitialized()
+    {
+        LoadingService.LoadingStateChanged += OnLoadingStateChanged;
+        isLoading = LoadingService.IsLoading();
+    }
+
+    private void OnLoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
+    {
+        isLoading = e.AnyLoading;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LoadingService.LoadingStateChanged -= OnLoadingStateChanged;
+    }
+}
+

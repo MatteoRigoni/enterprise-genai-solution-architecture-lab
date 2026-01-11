@@ -2,96 +2,96 @@
 
 /* Elevated Surface Card */
 .surface-card {
-  background-color: var(--bg-2);
-  border: 1px solid var(--border-0);
-  border-radius: var(--r-2);
-  padding: var(--s-4);
-  box-shadow: var(--shadow-1);
-  transition: box-shadow 150ms ease-out, border-color 150ms ease-out;
+    background-color: var(--bg-2);
+    border: 1px solid var(--border-0);
+    border-radius: var(--r-2);
+    padding: var(--s-4);
+    box-shadow: var(--shadow-1);
+    transition: box-shadow 150ms ease-out, border-color 150ms ease-out;
 }
 
-.surface-card:hover {
-  border-color: var(--border-1);
-  box-shadow: var(--shadow-2);
-}
+    .surface-card:hover {
+        border-color: var(--border-1);
+        box-shadow: var(--shadow-2);
+    }
 
 /* Hero/Banner Surface - Highest elevation */
 .surface-hero {
-  background-color: var(--bg-3);
-  border: 1px solid var(--border-0);
-  border-radius: var(--r-3);
-  padding: var(--s-5);
-  box-shadow: var(--shadow-2);
-  position: relative;
-  overflow: hidden;
+    background-color: var(--bg-3);
+    border: 1px solid var(--border-0);
+    border-radius: var(--r-3);
+    padding: var(--s-5);
+    box-shadow: var(--shadow-2);
+    position: relative;
+    overflow: hidden;
 }
 
-.surface-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: var(--glow-primary);
-  opacity: 0.3;
-  pointer-events: none;
-}
+    .surface-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: var(--glow-primary);
+        opacity: 0.3;
+        pointer-events: none;
+    }
 
 /* Compact Metric Card */
 .surface-metric {
-  background-color: var(--bg-2);
-  border: 1px solid var(--border-0);
-  border-radius: var(--r-1);
-  padding: var(--s-3);
-  box-shadow: var(--shadow-1);
+    background-color: var(--bg-2);
+    border: 1px solid var(--border-0);
+    border-radius: var(--r-1);
+    padding: var(--s-3);
+    box-shadow: var(--shadow-1);
 }
 
 /* Typography Hierarchy */
 .text-title {
-  font-size: 2rem;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--text-0);
-  margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-0);
+    margin: 0;
 }
 
 .text-section {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--text-0);
-  margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-0);
+    margin: 0;
 }
 
 .text-body {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--text-1);
-  margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-1);
+    margin: 0;
 }
 
 .text-label {
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: var(--text-2);
-  margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-2);
+    margin: 0;
 }
 
 /* Spacing Utilities */
 .spacing-section {
-  margin-bottom: var(--s-5);
+    margin-bottom: var(--s-5);
 }
 
 .spacing-group {
-  margin-bottom: var(--s-3);
+    margin-bottom: var(--s-3);
 }
 
 /* Focus States - Always visible */
 *:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
-  border-radius: var(--r-1);
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: var(--r-1);
 }
 
 /* Transitions */
@@ -116,3 +116,464 @@
     margin-top: var(--s-2);
 }
 
+/* Top Bar Components */
+.top-bar-search {
+    background-color: var(--bg-2) !important;
+    border: 1px solid var(--border-0) !important;
+    border-radius: var(--r-2) !important;
+    color: var(--text-0) !important;
+    width: 100%;
+    max-width: 500px;
+}
+
+    .top-bar-search ::deep input {
+        background-color: transparent !important;
+        color: var(--text-0) !important;
+    }
+
+        .top-bar-search ::deep input::placeholder {
+            color: var(--text-2) !important;
+        }
+
+/* FluentTextField in top bar center - theme-aware styling */
+.top-bar-center fluent-text-field {
+    --neutral-fill-input-rest: var(--bg-2) !important;
+    --neutral-stroke-input-rest: var(--border-0) !important;
+    --neutral-foreground-rest: var(--text-0) !important;
+}
+
+.top-bar-center fluent-text-field ::deep .control {
+    background-color: var(--bg-2) !important;
+    border: 1px solid var(--border-0) !important;
+    color: var(--text-0) !important;
+}
+
+.top-bar-center fluent-text-field ::deep input {
+    background-color: transparent !important;
+    color: var(--text-0) !important;
+}
+
+.top-bar-center fluent-text-field ::deep input::placeholder {
+    color: var(--text-2) !important;
+}
+
+.top-bar-center fluent-text-field:hover ::deep .control {
+    border-color: var(--border-1) !important;
+}
+
+.top-bar-center fluent-text-field:focus-within ::deep .control {
+    border-color: var(--accent-primary) !important;
+}
+
+.search-shortcut {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    padding: var(--s-1) var(--s-2);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-0);
+    border-radius: var(--r-1);
+    font-family: monospace;
+    backdrop-filter: blur(10px);
+}
+
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2); /* Uniform spacing between buttons */
+}
+
+/* Global override for FluentUI buttons in top bar - make control transparent */
+.top-bar fluent-button,
+.top-bar-center fluent-button,
+.sign-in-button {
+    --neutral-fill-stealth-rest: transparent !important;
+}
+
+    .top-bar fluent-button ::deep .control,
+    .top-bar-center fluent-button ::deep .control,
+    .sign-in-button ::deep .control {
+        background: transparent !important;
+    }
+
+/* Icon buttons - no background, just styled icons */
+/* Override FluentUI CSS variable to make control transparent */
+.top-bar-icon-button {
+    --neutral-fill-stealth-rest: transparent !important;
+    --accent-fill-rest: var(--text-0) !important; /* White icons by default */
+    color: var(--text-0) !important;
+    padding: 0 !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 150ms ease-out !important;
+    cursor: pointer;
+    transform-origin: center;
+}
+
+    /* Override .control background directly */
+    .top-bar-icon-button ::deep .control {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Default icon color - white */
+    .top-bar-icon-button ::deep fluent-icon,
+    .top-bar-icon-button ::deep svg {
+        fill: var(--text-0) !important;
+        width: 24px;
+        height: 24px;
+        transition: fill 150ms ease-out !important;
+        display: block;
+    }
+
+        .top-bar-icon-button ::deep svg path {
+            fill: var(--text-0) !important;
+            transition: fill 150ms ease-out !important;
+        }
+
+    /* Hover state - no background, zoom button and blue icon color */
+    .top-bar-icon-button:hover {
+        --neutral-fill-stealth-hover: transparent !important;
+        --accent-fill-rest: var(--accent-primary) !important; /* Blue icon on hover */
+        transform: scale(1.15) !important; /* Zoom effect on hover - applied to button */
+    }
+
+        .top-bar-icon-button:hover ::deep .control {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .top-bar-icon-button:hover ::deep fluent-icon,
+        .top-bar-icon-button:hover ::deep svg {
+            fill: var(--accent-primary) !important;
+        }
+
+            .top-bar-icon-button:hover ::deep svg path {
+                fill: var(--accent-primary) !important;
+            }
+
+    /* Active/pressed state - no background */
+    .top-bar-icon-button:active {
+        --neutral-fill-stealth-active: transparent !important;
+    }
+
+        .top-bar-icon-button:active ::deep .control {
+            background: transparent !important;
+            border: none !important;
+            opacity: 1;
+        }
+
+    /* Focus state - visible outline */
+    .top-bar-icon-button:focus-visible ::deep .control {
+        outline: 2px solid var(--accent-primary) !important;
+        outline-offset: 2px !important;
+    }
+
+/* Search icon button - completely transparent, looks like just an icon */
+/* Override FluentUI CSS variable */
+.search-icon-button {
+    --neutral-fill-stealth-rest: transparent !important;
+    --accent-fill-rest: var(--accent-primary) !important; /* Blue icon by default */
+    padding: 0 !important;
+    margin: 0 !important;
+    min-width: auto !important;
+    width: auto !important;
+    height: auto !important;
+    cursor: pointer;
+    transition: transform 150ms ease-out !important;
+    transform-origin: center;
+}
+
+    /* Override .control background directly */
+    .search-icon-button ::deep .control {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Default icon color - blue (different from other topbar icons) */
+    .search-icon-button ::deep fluent-icon,
+    .search-icon-button ::deep svg {
+        fill: var(--accent-primary) !important;
+        width: 24px;
+        height: 24px;
+        transition: fill 150ms ease-out !important;
+        display: block;
+    }
+
+        .search-icon-button ::deep svg path {
+            fill: var(--accent-primary) !important;
+            transition: fill 150ms ease-out !important;
+        }
+
+    /* Hover state - zoom effect, keep blue color */
+    .search-icon-button:hover {
+        --neutral-fill-stealth-hover: transparent !important;
+        --accent-fill-rest: var(--accent-primary) !important;
+        transform: scale(1.15) !important; /* Zoom effect on hover - applied to button */
+    }
+
+        .search-icon-button:hover ::deep .control {
+            background: transparent !important;
+        }
+
+        .search-icon-button:hover ::deep fluent-icon,
+        .search-icon-button:hover ::deep svg {
+            fill: var(--accent-primary) !important;
+        }
+
+            .search-icon-button:hover ::deep svg path {
+                fill: var(--accent-primary) !important;
+            }
+
+    /* Active/pressed state - no background */
+    .search-icon-button:active {
+        --neutral-fill-stealth-active: transparent !important;
+    }
+
+        .search-icon-button:active ::deep .control {
+            background: transparent !important;
+            border: none !important;
+        }
+
+    /* Focus state */
+    .search-icon-button:focus-visible ::deep .control {
+        outline: 2px solid var(--accent-primary) !important;
+        outline-offset: 2px !important;
+    }
+
+.notification-button {
+    position: relative;
+}
+
+/* Notification badge - always red dot, independent of hover */
+.notification-badge {
+    position: relative;
+    top: 5px;
+}
+
+    /* Force red background for badge, always */
+    .notification-badge ::deep fluent-badge,
+    .notification-badge ::deep fluent-badge::part(badge),
+    .notification-badge ::deep .badge {
+        background-color: var(--danger-0) !important;
+        color: var(--text-0) !important;
+    }
+
+    /* Ensure badge stays red on hover - override any hover states */
+    .notification-badge:hover ::deep fluent-badge,
+    .notification-badge:hover ::deep fluent-badge::part(badge),
+    .notification-badge:hover ::deep .badge,
+    .notification-button:hover ~ fluent-badge {
+        background-color: var(--danger-0) !important;
+        color: var(--text-0) !important;
+    }
+
+/* Sign In Button styling - matches top-bar button style */
+.sign-in-button {
+    --neutral-fill-stealth-rest: transparent !important;
+    --accent-fill-rest: var(--text-0) !important; /* White icons by default */
+    color: var(--text-0) !important;
+    padding: var(--s-1) var(--s-2) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-1);
+    transition: all 150ms ease-out;
+}
+
+.sign-in-button ::deep .control {
+    background: transparent !important;
+    border: 1px solid var(--border-0) !important;
+    color: var(--text-0) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-1);
+    line-height: 1;
+}
+
+.sign-in-button ::deep .control > *:not(fluent-icon) {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
+/* Sign In icon - same style as other top-bar icons */
+.sign-in-button ::deep fluent-icon,
+.sign-in-button ::deep .sign-in-icon {
+    fill: var(--text-0) !important;
+    width: 24px;
+    height: 24px;
+    transition: fill 150ms ease-out !important;
+    display: block;
+    flex-shrink: 0;
+}
+
+.sign-in-button ::deep fluent-icon svg,
+.sign-in-button ::deep .sign-in-icon svg {
+    fill: var(--text-0) !important;
+    width: 24px;
+    height: 24px;
+    transition: fill 150ms ease-out !important;
+    display: block;
+}
+
+.sign-in-button ::deep fluent-icon svg path,
+.sign-in-button ::deep .sign-in-icon svg path {
+    fill: var(--text-0) !important;
+    transition: fill 150ms ease-out !important;
+}
+
+.sign-in-button:hover {
+    --neutral-fill-stealth-hover: var(--bg-2) !important;
+    --accent-fill-rest: var(--accent-primary) !important; /* Blue icon on hover */
+}
+
+.sign-in-button:hover ::deep .control {
+    background: var(--bg-2) !important;
+    border-color: var(--border-0) !important;
+}
+
+/* Icon color changes to blue on hover, same as other icons */
+.sign-in-button:hover ::deep fluent-icon,
+.sign-in-button:hover ::deep .sign-in-icon {
+    fill: var(--accent-primary) !important;
+}
+
+.sign-in-button:hover ::deep fluent-icon svg,
+.sign-in-button:hover ::deep .sign-in-icon svg {
+    fill: var(--accent-primary) !important;
+}
+
+.sign-in-button:hover ::deep fluent-icon svg path,
+.sign-in-button:hover ::deep .sign-in-icon svg path {
+    fill: var(--accent-primary) !important;
+}
+
+.sign-in-button:focus-visible ::deep .control {
+    outline: 2px solid var(--accent-primary) !important;
+    outline-offset: 2px !important;
+}
+
+/* FluentProfileMenu styling - match reference design with transparency */
+.top-bar-profile-menu {
+    --neutral-fill-stealth-rest: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    /* Remove fixed width/height to allow auto sizing for StartTemplate */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .top-bar-profile-menu ::deep button {
+        padding: var(--s-1) var(--s-2) !important;
+        /* Remove fixed width/height to allow auto sizing */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--s-2);
+        color: var(--text-0) !important;
+        transition: all 150ms ease-out;
+    }
+
+    /* Override .control background directly */
+    .top-bar-profile-menu ::deep .control {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Hover state - subtle background */
+    .top-bar-profile-menu ::deep button:hover {
+        --neutral-fill-stealth-hover: var(--bg-2) !important;
+    }
+
+        .top-bar-profile-menu ::deep button:hover .control {
+            background: var(--bg-2) !important;
+            border: 1px solid var(--border-0) !important;
+        }
+
+    /* Focus state */
+    .top-bar-profile-menu ::deep button:focus-visible .control {
+        outline: 2px solid var(--accent-primary) !important;
+        outline-offset: 2px !important;
+    }
+
+    .top-bar-profile-menu ::deep .fluent-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .top-bar-profile-menu ::deep .fluent-profile-menu-name {
+        color: var(--text-0) !important;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .top-bar-profile-menu ::deep .fluent-profile-menu-email {
+        color: var(--text-1) !important;
+        font-size: 0.75rem;
+    }
+
+/* FluentUI Panel/Dialog Styling - Match dark theme */
+/* Target all fluent-dialog elements, especially panels */
+fluent-dialog,
+fluent-dialog[type="panel"] {
+    --neutral-layer-1: var(--bg-1) !important;
+    --neutral-layer-2: var(--bg-2) !important;
+    --neutral-layer-3: var(--bg-3) !important;
+    --neutral-foreground-rest: var(--text-0) !important;
+    --neutral-foreground-hover: var(--text-0) !important;
+    background-color: var(--bg-1) !important;
+    color: var(--text-0) !important;
+}
+
+    /* Panel overlay */
+    fluent-dialog::part(overlay),
+    fluent-dialog[type="panel"]::part(overlay) {
+        background-color: rgba(0, 0, 0, 0.4) !important;
+    }
+
+    /* Panel control/content area */
+    fluent-dialog::part(control),
+    fluent-dialog[type="panel"]::part(control) {
+        background-color: var(--bg-1) !important;
+        color: var(--text-0) !important;
+        border-left: 1px solid var(--border-0) !important;
+    }
+
+    /* Panel header - Hide default title */
+    fluent-dialog ::deep .fluent-dialog-header,
+    fluent-dialog[type="panel"] ::deep .fluent-dialog-header {
+        background-color: var(--bg-1) !important;
+        padding: var(--s-2) var(--s-3) !important;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    /* Panel body/content */
+    fluent-dialog ::deep .fluent-dialog-body,
+    fluent-dialog[type="panel"] ::deep .fluent-dialog-body,
+    fluent-dialog ::deep .fluent-dialog-content,
+    fluent-dialog[type="panel"] ::deep .fluent-dialog-content {
+        background-color: var(--bg-1) !important;
+        color: var(--text-0) !important;
+    }
+
+/* Panel close button - White, transparent background */
+#dialog_close::part(control) {
+    background: transparent !important;
+}
+
+#dialog_close::part(control):hover {
+    background: transparent !important;
+}
+
+#dialog_close::part(control):active {
+    background: transparent !important;
+}

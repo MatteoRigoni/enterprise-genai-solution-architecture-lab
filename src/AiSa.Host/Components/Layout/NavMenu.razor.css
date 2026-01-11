@@ -4,35 +4,89 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: var(--s-4);
+    padding: var(--s-2);
+    overflow: hidden;
 }
 
 .sidebar-brand {
-    padding: var(--s-3) 0 var(--s-4) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: var(--s-1) 0;
     border-bottom: 1px solid var(--border-0);
     margin-bottom: var(--s-3);
 }
 
-.sidebar-brand h2 {
+.brand-logo {
+    flex-shrink: 0;
+}
+
+.brand-image {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    filter: brightness(1.5) contrast(1.3);
+    transition: filter 150ms ease-out;
+}
+
+.brand-image:hover {
+    filter: brightness(1.7) contrast(1.4);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-);
+    flex: 1;
+    min-width: 0;
+}
+
+.brand-title {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-0);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 50%, var(--accent-tertiary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent; /* Fallback for browsers that don't support background-clip */
+    line-height: 1.2;
+}
+
+.brand-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--text-2);
+    line-height: 1.4;
 }
 
 .nav-menu {
     display: flex;
     flex-direction: column;
-    gap: var(--s-1);
+    gap: 0;
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
-.nav-item {
+.nav-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: var(--s-2);
+    border-top: 1px solid var(--border-0);
+    margin-top: var(--s-2);
+    flex-shrink: 0;
+}
+
+/* NavLink renders the <a>, so we need ::deep */
+.sidebar-nav ::deep .nav-item {
     display: flex;
     align-items: center;
     gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
+    padding: var(--s-1) var(--s-2);
     color: var(--text-1);
     text-decoration: none;
     border-radius: var(--r-1);
@@ -40,42 +94,138 @@
     font-size: 0.9375rem;
     line-height: 1.4;
     border: 1px solid transparent;
+    white-space: nowrap;
+    position: relative;
+    --accent-fill-rest: var(--text-1); /* Override Fluent UI icon color variable */
 }
 
-.nav-item:hover {
-    background-color: var(--bg-2);
-    color: var(--text-0);
-    border-color: var(--border-0);
-}
+    .sidebar-nav ::deep .nav-item:hover {
+        background-color: var(--bg-2);
+        color: var(--text-0);
+        border-color: var(--border-0);
+        --accent-fill-rest: var(--text-0); /* Override Fluent UI icon color on hover */
+    }
 
-.nav-item:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
+    .sidebar-nav ::deep .nav-item:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+    }
 
-.nav-item.active {
-    background-color: var(--bg-2);
-    color: var(--accent-primary);
-    border-color: var(--border-1);
-}
+    .sidebar-nav ::deep .nav-item.active {
+        background-color: var(--accent-primary-alpha);
+        color: var(--accent-primary);
+        border-color: transparent;
+        --accent-fill-rest: var(--accent-primary); /* Override Fluent UI icon color for active item */
+    }
 
-.nav-icon {
-    font-size: 1.125rem;
+    /* Accent bar on the left for active item */
+    .sidebar-nav ::deep .nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background-color: var(--accent-primary);
+        border-radius: 0;
+    }
+
+/* FluentIcon styling */
+.sidebar-nav ::deep .nav-icon {
     width: 24px;
     height: 24px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
 }
 
-.nav-item > span:last-child {
+/* Default icon color - targets SVG fill inside FluentIcon */
+.sidebar-nav ::deep .nav-icon svg {
+    fill: var(--text-1) !important;
+}
+
+.sidebar-nav ::deep .nav-icon svg path {
+    fill: var(--text-1) !important;
+}
+
+/* Hover state icon color */
+.sidebar-nav ::deep .nav-item:hover .nav-icon svg {
+    fill: var(--text-0) !important;
+}
+
+.sidebar-nav ::deep .nav-item:hover .nav-icon svg path {
+    fill: var(--text-0) !important;
+}
+
+/* Active item icon color */
+.sidebar-nav ::deep .nav-item.active .nav-icon svg {
+    fill: var(--accent-primary) !important;
+}
+
+.sidebar-nav ::deep .nav-item.active .nav-icon svg path {
+    fill: var(--accent-primary) !important;
+}
+
+/* Text label styling */
+.sidebar-nav ::deep .nav-item > span:last-child {
     flex: 1;
 }
 
-/* Responsive - Mobile menu toggle if needed */
+/* Admin button styling - same as nav-item */
+.sidebar-nav .admin-button {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-1) var(--s-2);
+    color: var(--text-1);
+    text-decoration: none;
+    border-radius: var(--r-1);
+    transition: all 150ms ease-out;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    position: relative;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    --accent-fill-rest: var(--text-1);
+}
+
+    .sidebar-nav .admin-button:hover {
+        background-color: var(--bg-2);
+        color: var(--text-0);
+        border-color: var(--border-0);
+        --accent-fill-rest: var(--text-0);
+    }
+
+    .sidebar-nav .admin-button:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+    }
+
+    .sidebar-nav .admin-button:active {
+        background-color: var(--bg-2);
+    }
+
 @media (max-width: 768px) {
     .sidebar-nav {
         padding: var(--s-2);
+    }
+
+    .brand-image {
+        width: 48px;
+        height: 48px;
+    }
+
+    .brand-title {
+        font-size: 1.125rem;
+    }
+
+    .brand-subtitle {
+        font-size: 0.8125rem;
     }
 }
