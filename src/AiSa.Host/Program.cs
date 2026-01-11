@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Security.Claims;
 using AiSa.Application;
 using AiSa.Host;
 using AiSa.Host.Components;
@@ -9,9 +7,12 @@ using AiSa.Host.Services;
 using AiSa.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.FluentUI.AspNetCore.Components;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Diagnostics;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -124,23 +125,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAntiforgery();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapStaticAssets();
-
-// Swagger UI - Only in Development
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "AiSa API v1");
-        options.RoutePrefix = "swagger"; // Swagger UI at /swagger
-    });
-}
 
 // API pipeline: ProblemDetails for exceptions and for non-success status codes (e.g., 404)
 app.UseWhen(
@@ -157,13 +144,19 @@ app.UseWhen(
         api.UseStatusCodePages();
     });
 
-// UI pipeline: Blazor-friendly status pages
-app.UseWhen(
-    ctx => !ctx.Request.Path.StartsWithSegments("/api"),
-    ui =>
+// Swagger UI - Only in Development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
     {
-        ui.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "AiSa API v1");
+        options.RoutePrefix = "swagger"; // Swagger UI at /swagger
     });
+}
+
+app.UseAntiforgery();
+app.MapStaticAssets();
 
 // Blazor UI
 app.MapRazorComponents<App>()
@@ -195,6 +188,19 @@ app.MapGet("/Account/Logout", async (HttpContext context) =>
     await context.SignOutAsync("Cookies");
     return Results.Redirect("/");
 });
+
+// Fallbacks
+app.MapFallback("/api/{*path}", (HttpContext ctx) =>
+    Results.Problem(
+        statusCode: StatusCodes.Status404NotFound,
+        title: "Not Found",
+        instance: ctx.Request.Path));
+
+app.MapFallback("{*path:nonfile}", () =>
+    new RazorComponentResult<App>
+    {
+        StatusCode = StatusCodes.Status404NotFound
+    });
 
 app.Run();
 

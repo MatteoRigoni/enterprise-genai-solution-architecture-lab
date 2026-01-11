@@ -21,16 +21,28 @@
             try {
                 const savedTheme = localStorage.getItem('theme');
                 const theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
-                document.documentElement.classList.remove('theme-dark', 'theme-light');
-                document.body.classList.remove('theme-dark', 'theme-light');
-                document.documentElement.classList.add('theme-' + theme);
-                document.body.classList.add('theme-' + theme);
+                const html = document.documentElement;
+                const body = document.body;
+                if (html) {
+                    html.classList.remove('theme-dark', 'theme-light');
+                    html.classList.add('theme-' + theme);
+                }
+                if (body) {
+                    body.classList.remove('theme-dark', 'theme-light');
+                    body.classList.add('theme-' + theme);
+                }
             } catch (e) {
                 // localStorage not available, use default dark theme
-                document.documentElement.classList.remove('theme-dark', 'theme-light');
-                document.body.classList.remove('theme-dark', 'theme-light');
-                document.documentElement.classList.add('theme-dark');
-                document.body.classList.add('theme-dark');
+                const html = document.documentElement;
+                const body = document.body;
+                if (html) {
+                    html.classList.remove('theme-dark', 'theme-light');
+                    html.classList.add('theme-dark');
+                }
+                if (body) {
+                    body.classList.remove('theme-dark', 'theme-light');
+                    body.classList.add('theme-dark');
+                }
             }
         })();
     </script>

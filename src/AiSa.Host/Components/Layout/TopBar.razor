@@ -128,32 +128,24 @@
     {
         if (firstRender)
         {
-            // Sync BaseLayerLuminance with CSS classes (already set by inline script)
-            // Read the theme from CSS classes without changing them to avoid flash
+            // Sync BaseLayerLuminance with localStorage (CSS classes already set by inline script)
+            // Read directly from localStorage (source of truth) to avoid interference
             try
             {
-                var themeClass = await JSRuntime.InvokeAsync<string>("eval", @"
-                    (function() {
-                        const html = document.documentElement;
-                        if (html.classList.contains('theme-dark')) return 'dark';
-                        if (html.classList.contains('theme-light')) return 'light';
-                        return 'dark'; // default
-                    })();
-                ");
+                var savedTheme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "theme");
+                var theme = !string.IsNullOrEmpty(savedTheme) && (savedTheme == "light" || savedTheme == "dark") 
+                    ? savedTheme 
+                    : "dark";
                 
-                // Only update BaseLayerLuminance if it doesn't match the CSS classes
-                var currentLuminance = BaseLayerLuminance.Value;
-                var expectedLuminance = themeClass == "dark" ? 0.15f : 1.0f;
+                var expectedLuminance = theme == "dark" ? 0.15f : 1.0f;
                 
-                // Only change if different to avoid unnecessary re-renders
-                if (Math.Abs((currentLuminance ?? 0f) - expectedLuminance) > 0.01f)
-                {
-                    BaseLayerLuminance.Value = expectedLuminance;
-                }
+                // Always set BaseLayerLuminance to match localStorage (CSS classes already set by inline script)
+                BaseLayerLuminance.Value = expectedLuminance;
             }
             catch
             {
-                // If JS fails, use default - CSS classes should still be correct from inline script
+                // If JS fails, use default dark theme
+                BaseLayerLuminance.Value = 0.15f;
             }
         }
         await base.OnAfterRenderAsync(firstRender);
@@ -220,33 +212,6 @@
         {
             await HandleSearch();
         }
-    }
-
-    private async Task SyncThemeClassesAsync()
-    {
-        // Sync CSS classes with BaseLayerLuminance value
-        var isDark = BaseLayerLuminance.Value <= 0.5f;
-        
-        await JSRuntime.InvokeVoidAsync("eval", @"
-            (function() {
-                const html = document.documentElement;
-                const body = document.body;
-                const isDark = " + isDark.ToString().ToLower() + @";
-                
-                // Remove both classes first from both html and body
-                html.classList.remove('theme-dark', 'theme-light');
-                body.classList.remove('theme-dark', 'theme-light');
-                
-                // Add the correct one to both
-                if (isDark) {
-                    html.classList.add('theme-dark');
-                    body.classList.add('theme-dark');
-                } else {
-                    html.classList.add('theme-light');
-                    body.classList.add('theme-light');
-                }
-            })();
-        ");
     }
 
     private async Task ToggleTheme()
