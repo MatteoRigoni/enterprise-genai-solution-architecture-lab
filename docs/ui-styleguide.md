@@ -38,6 +38,7 @@ The UI must feel:
 3. **Accessibility first** (contrast, focus visibility)
 4. **Token-driven styling only**
 5. **Minimal custom CSS**, focused on layout and surfaces
+6. **Dark/Light theme support** - MAI usare colori hardcoded, SEMPRE usare variabili token (vedi sezione "Dark/Light Theme Support")
 
 ---
 
@@ -81,9 +82,11 @@ The UI must feel:
 ## CSS Architecture (Mandatory)
 All custom styling must be isolated and token-driven.
 
+> **⚠️ CRITICAL**: Prima di scrivere qualsiasi CSS, leggere la sezione **"Dark/Light Theme Support"** per capire come gestire correttamente i colori e i temi.
+
 ### File Structure
 Place under `src/AiSa.Host/wwwroot/css/`:
-tokens.css // design tokens (variables only)
+tokens.css // design tokens (variables only) - contiene definizioni dark/light theme
 layout.css // shell and layout containers
 components.css // surfaces, cards, hero, utilities
 app.css // imports + minimal overrides
@@ -91,6 +94,7 @@ app.css // imports + minimal overrides
 
 No inline styles.  
 No random hex values outside `tokens.css`.
+**Tutti i colori devono usare variabili token** (vedi sezione "Dark/Light Theme Support").
 
 ---
 
@@ -120,6 +124,67 @@ No random hex values outside `tokens.css`.
 - `--success-0`
 - `--warning-0`
 - `--danger-0`
+
+---
+
+## Dark/Light Theme Support (CRITICAL)
+
+> **⚠️ IMPORTANTE: Leggere questa sezione prima di qualsiasi modifica CSS**
+
+L'applicazione supporta **dark e light theme** tramite toggle nella topbar. Il sistema è implementato tramite:
+
+1. **Classi CSS**: `.theme-dark` e `.theme-light` vengono applicate a `:root`, `body`, e `html`
+2. **Variabili CSS token**: Tutti i colori cambiano automaticamente in base al tema
+3. **FluentUI BaseLayerLuminance**: Gestito programmaticamente nel `TopBar.razor`
+
+### Regole OBBLIGATORIE
+
+**❌ MAI fare:**
+- Usare colori hardcoded (es: `#ffffff`, `#000000`, `rgba(255,255,255,0.8)`)
+- Assumere che il tema sia sempre dark o sempre light
+- Usare colori diretti nei CSS senza variabili token
+
+**✅ SEMPRE fare:**
+- Usare **SOLO** variabili CSS token (`--bg-0`, `--text-0`, `--border-0`, ecc.)
+- Tutti i colori devono essere definiti tramite token in `tokens.css`
+- I token cambiano automaticamente in base al tema (dark/light)
+
+### Stilizzazione Componenti FluentUI Input
+
+**✅ IMPORTANTE**: Le regole per **TUTTI i componenti input di FluentUI** sono **già globali** in `components.css` (sezione "GLOBAL FLUENTUI INPUT COMPONENTS THEME-AWARE STYLING"). 
+
+Le regole si applicano automaticamente a:
+- `FluentTextField` (text-field)
+- `FluentTextArea` (text-area)
+- `FluentNumberField` (number-field)
+- `FluentSearch` (search)
+- `FluentCombobox` (combobox)
+- `FluentSelect` (select)
+- E qualsiasi altro componente input di FluentUI
+
+**NON serve aggiungere stili specifici** per ogni input - le regole globali si applicano automaticamente a tutti gli input nell'applicazione.
+
+**Se necessario** (solo per casi speciali), si può fare override con selettori più specifici, ma **sempre usando variabili token**:
+
+```css
+/* Esempio: override solo se strettamente necessario */
+.my-special-case fluent-text-field {
+    --neutral-fill-input-rest: var(--bg-3) !important; /* Solo se serve un bg diverso */
+}
+```
+
+**Regola generale**: Se un input non segue il tema, probabilmente c'è un override che la sovrascrive. Rimuovere l'override e lasciare che le regole globali funzionino.
+
+### Esempio di Riferimento
+
+Vedi `components.css` sezione "GLOBAL FLUENTUI INPUT COMPONENTS THEME-AWARE STYLING" per le regole globali applicate a tutti gli input.
+
+### Verifica
+
+Dopo ogni modifica CSS:
+1. Testare in **dark theme** (default)
+2. Testare in **light theme** (toggle nella topbar)
+3. Verificare che tutti i colori siano leggibili e coerenti in entrambi i temi
 
 ---
 

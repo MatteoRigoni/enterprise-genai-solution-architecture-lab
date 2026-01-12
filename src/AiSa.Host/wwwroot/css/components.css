@@ -116,6 +116,75 @@
     margin-top: 0;
 }
 
+/* Gradient Title (matches navbar brand-title) */
+.text-title-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent; /* Fallback for browsers that don't support background-clip */
+}
+
+/* Hero Header with dismiss button */
+.hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--s-2);
+    margin-bottom: var(--s-2);
+}
+
+.hero-dismiss-button {
+    --neutral-fill-stealth-rest: transparent !important;
+    --accent-fill-rest: var(--text-2) !important;
+    color: var(--text-2) !important;
+    padding: var(--s-1) !important;
+    min-width: auto !important;
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0;
+    transition: color 150ms ease-out, transform 150ms ease-out;
+    cursor: pointer;
+}
+
+.hero-dismiss-button:hover {
+    --accent-fill-rest: var(--text-0) !important;
+    color: var(--text-0) !important;
+    transform: scale(1.1);
+}
+
+.hero-dismiss-button ::deep .control {
+    background: transparent !important;
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+    margin-bottom: var(--s-5);
+}
+
+.dashboard-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Dashboard Grid - Responsive layout for stat cards */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--s-3);
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Top Bar Components */
 .top-bar-search {
     background-color: var(--bg-2) !important;
@@ -135,35 +204,7 @@
             color: var(--text-2) !important;
         }
 
-/* FluentTextField in top bar center - theme-aware styling */
-.top-bar-center fluent-text-field {
-    --neutral-fill-input-rest: var(--bg-2) !important;
-    --neutral-stroke-input-rest: var(--border-0) !important;
-    --neutral-foreground-rest: var(--text-0) !important;
-}
-
-.top-bar-center fluent-text-field ::deep .control {
-    background-color: var(--bg-2) !important;
-    border: 1px solid var(--border-0) !important;
-    color: var(--text-0) !important;
-}
-
-.top-bar-center fluent-text-field ::deep input {
-    background-color: transparent !important;
-    color: var(--text-0) !important;
-}
-
-.top-bar-center fluent-text-field ::deep input::placeholder {
-    color: var(--text-2) !important;
-}
-
-.top-bar-center fluent-text-field:hover ::deep .control {
-    border-color: var(--border-1) !important;
-}
-
-.top-bar-center fluent-text-field:focus-within ::deep .control {
-    border-color: var(--accent-primary) !important;
-}
+/* Note: FluentTextField styling is now handled globally - see "GLOBAL FLUENTTEXTFIELD THEME-AWARE STYLING" section */
 
 .search-shortcut {
     font-size: 0.75rem;
@@ -577,3 +618,273 @@ fluent-dialog[type="panel"] {
 #dialog_close::part(control):active {
     background: transparent !important;
 }
+
+/* ============================================
+   GLOBAL FLUENTUI INPUT COMPONENTS THEME-AWARE STYLING
+   ============================================
+   These rules apply to ALL FluentUI input components throughout the application
+   to ensure consistent dark/light theme support using our custom design tokens.
+   
+   WHY THESE OVERRIDES ARE NEEDED:
+   - FluentUI's BaseLayerLuminance handles theme switching automatically
+   - However, we use custom design tokens (--bg-2, --text-0, --border-0, etc.)
+     instead of FluentUI's default neutral color variables
+   - These overrides map our custom tokens to FluentUI's internal CSS variables,
+     ensuring our design system colors are used while maintaining theme switching
+   - Without these overrides, inputs would use FluentUI's default colors which
+     don't match our design system
+   
+   DO NOT override these with component-specific styles unless absolutely necessary.
+   ============================================ */
+
+/* All FluentUI input components - CSS variables override */
+/* Using comma-separated selector for all input-like components */
+fluent-text-field,
+fluent-text-area,
+fluent-number-field,
+fluent-search,
+fluent-combobox,
+fluent-select {
+    /* Background fill - all states */
+    --neutral-fill-input-rest: var(--bg-2) !important;
+    --neutral-fill-input-hover: var(--bg-2) !important;
+    --neutral-fill-input-active: var(--bg-2) !important;
+    --neutral-fill-input-focus: var(--bg-2) !important;
+    --neutral-fill-input-disabled: var(--bg-2) !important;
+    
+    /* Border stroke - all states */
+    --neutral-stroke-input-rest: var(--border-0) !important;
+    --neutral-stroke-input-hover: var(--border-1) !important;
+    --neutral-stroke-input-active: var(--border-1) !important;
+    --neutral-stroke-input-focus: var(--accent-primary) !important;
+    --neutral-stroke-input-disabled: var(--border-0) !important;
+    
+    /* Text color - all states (CRITICAL for visibility) */
+    --neutral-foreground-rest: var(--text-0) !important;
+    --neutral-foreground-hover: var(--text-0) !important;
+    --neutral-foreground-active: var(--text-0) !important;
+    --neutral-foreground-focus: var(--text-0) !important;
+    --neutral-foreground-disabled: var(--text-2) !important;
+    
+    /* Focus accent */
+    --accent-stroke-control-focus: var(--accent-primary) !important;
+    --accent-fill-control-focus: var(--bg-2) !important;
+    
+    /* FluentUI layer variables - map to our design tokens */
+    --neutral-layer-1: var(--bg-1) !important;
+    --neutral-layer-2: var(--bg-2) !important;
+    --neutral-layer-3: var(--bg-3) !important;
+    --neutral-layer-4: var(--bg-3) !important;
+}
+
+/* Control element (input container) - base state */
+fluent-text-field ::deep .control,
+fluent-text-area ::deep .control,
+fluent-number-field ::deep .control,
+fluent-search ::deep .control,
+fluent-combobox ::deep .control,
+fluent-select ::deep .control {
+    background-color: var(--bg-2) !important;
+    border: 1px solid var(--border-0) !important;
+    color: var(--text-0) !important;
+    transition: border-color 150ms ease-out, background-color 150ms ease-out !important;
+}
+
+/* Control hover state */
+fluent-text-field:hover ::deep .control,
+fluent-text-area:hover ::deep .control,
+fluent-number-field:hover ::deep .control,
+fluent-search:hover ::deep .control,
+fluent-combobox:hover ::deep .control,
+fluent-select:hover ::deep .control {
+    background-color: var(--bg-2) !important;
+    border-color: var(--border-1) !important;
+}
+
+/* Control focus state - CRITICAL: maintain theme in focus */
+fluent-text-field:focus-within ::deep .control,
+fluent-text-field.focused ::deep .control,
+fluent-text-field[focus] ::deep .control,
+fluent-text-area:focus-within ::deep .control,
+fluent-text-area.focused ::deep .control,
+fluent-text-area[focus] ::deep .control,
+fluent-number-field:focus-within ::deep .control,
+fluent-number-field.focused ::deep .control,
+fluent-number-field[focus] ::deep .control,
+fluent-search:focus-within ::deep .control,
+fluent-search.focused ::deep .control,
+fluent-search[focus] ::deep .control,
+fluent-combobox:focus-within ::deep .control,
+fluent-combobox.focused ::deep .control,
+fluent-combobox[focus] ::deep .control,
+fluent-select:focus-within ::deep .control,
+fluent-select.focused ::deep .control,
+fluent-select[focus] ::deep .control {
+    background-color: var(--bg-2) !important;
+    border-color: var(--accent-primary) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 1px var(--accent-primary) !important;
+}
+
+/* Control active state */
+fluent-text-field:active ::deep .control,
+fluent-text-field.active ::deep .control,
+fluent-text-area:active ::deep .control,
+fluent-text-area.active ::deep .control,
+fluent-number-field:active ::deep .control,
+fluent-number-field.active ::deep .control,
+fluent-search:active ::deep .control,
+fluent-search.active ::deep .control,
+fluent-combobox:active ::deep .control,
+fluent-combobox.active ::deep .control,
+fluent-select:active ::deep .control,
+fluent-select.active ::deep .control {
+    background-color: var(--bg-2) !important;
+    border-color: var(--border-1) !important;
+}
+
+/* Input/Textarea elements - base state */
+fluent-text-field ::deep input,
+fluent-text-area ::deep textarea,
+fluent-number-field ::deep input,
+fluent-search ::deep input,
+fluent-combobox ::deep input,
+fluent-select ::deep input {
+    background-color: transparent !important;
+    color: var(--text-0) !important;
+}
+
+/* Input/Textarea focus state - ensure text remains visible */
+fluent-text-field:focus-within ::deep input,
+fluent-text-field.focused ::deep input,
+fluent-text-field[focus] ::deep input,
+fluent-text-field:focus ::deep input,
+fluent-text-area:focus-within ::deep textarea,
+fluent-text-area.focused ::deep textarea,
+fluent-text-area[focus] ::deep textarea,
+fluent-text-area:focus ::deep textarea,
+fluent-number-field:focus-within ::deep input,
+fluent-number-field.focused ::deep input,
+fluent-number-field[focus] ::deep input,
+fluent-number-field:focus ::deep input,
+fluent-search:focus-within ::deep input,
+fluent-search.focused ::deep input,
+fluent-search[focus] ::deep input,
+fluent-search:focus ::deep input,
+fluent-combobox:focus-within ::deep input,
+fluent-combobox.focused ::deep input,
+fluent-combobox[focus] ::deep input,
+fluent-combobox:focus ::deep input,
+fluent-select:focus-within ::deep input,
+fluent-select.focused ::deep input,
+fluent-select[focus] ::deep input,
+fluent-select:focus ::deep input {
+    background-color: transparent !important;
+    color: var(--text-0) !important;
+}
+
+/* Force text color in focus - handle all input types */
+fluent-text-field:focus-within ::deep input[type="text"],
+fluent-text-field:focus-within ::deep input[type="search"],
+fluent-text-field:focus-within ::deep input[type="email"],
+fluent-text-field:focus-within ::deep input[type="password"],
+fluent-text-area:focus-within ::deep textarea,
+fluent-number-field:focus-within ::deep input[type="number"],
+fluent-search:focus-within ::deep input[type="search"],
+fluent-combobox:focus-within ::deep input,
+fluent-select:focus-within ::deep input {
+    background-color: transparent !important;
+    color: var(--text-0) !important;
+    -webkit-text-fill-color: var(--text-0) !important;
+}
+
+/* Placeholder text - base and focus states */
+fluent-text-field ::deep input::placeholder,
+fluent-text-area ::deep textarea::placeholder,
+fluent-number-field ::deep input::placeholder,
+fluent-search ::deep input::placeholder,
+fluent-combobox ::deep input::placeholder,
+fluent-select ::deep input::placeholder,
+fluent-text-field:focus-within ::deep input::placeholder,
+fluent-text-field.focused ::deep input::placeholder,
+fluent-text-area:focus-within ::deep textarea::placeholder,
+fluent-text-area.focused ::deep textarea::placeholder,
+fluent-number-field:focus-within ::deep input::placeholder,
+fluent-number-field.focused ::deep input::placeholder,
+fluent-search:focus-within ::deep input::placeholder,
+fluent-search.focused ::deep input::placeholder,
+fluent-combobox:focus-within ::deep input::placeholder,
+fluent-combobox.focused ::deep input::placeholder,
+fluent-select:focus-within ::deep input::placeholder,
+fluent-select.focused ::deep input::placeholder {
+    color: var(--text-2) !important;
+    opacity: 1 !important;
+}
+
+/* FluentUI internal classes override */
+fluent-text-field ::deep .root,
+fluent-text-field ::deep .form-control,
+fluent-text-field ::deep .input,
+fluent-text-area ::deep .root,
+fluent-text-area ::deep .form-control,
+fluent-number-field ::deep .root,
+fluent-number-field ::deep .form-control,
+fluent-search ::deep .root,
+fluent-search ::deep .form-control,
+fluent-combobox ::deep .root,
+fluent-combobox ::deep .form-control,
+fluent-select ::deep .root,
+fluent-select ::deep .form-control {
+    background-color: var(--bg-2) !important;
+    color: var(--text-0) !important;
+}
+
+/* Control focus pseudo-classes (additional safety) */
+fluent-text-field ::deep .control:focus,
+fluent-text-field ::deep .control:focus-within,
+fluent-text-field ::deep .control.focused,
+fluent-text-area ::deep .control:focus,
+fluent-text-area ::deep .control:focus-within,
+fluent-text-area ::deep .control.focused,
+fluent-number-field ::deep .control:focus,
+fluent-number-field ::deep .control:focus-within,
+fluent-number-field ::deep .control.focused,
+fluent-search ::deep .control:focus,
+fluent-search ::deep .control:focus-within,
+fluent-search ::deep .control.focused,
+fluent-combobox ::deep .control:focus,
+fluent-combobox ::deep .control:focus-within,
+fluent-combobox ::deep .control.focused,
+fluent-select ::deep .control:focus,
+fluent-select ::deep .control:focus-within,
+fluent-select ::deep .control.focused {
+    background-color: var(--bg-2) !important;
+    border-color: var(--accent-primary) !important;
+}
+
+/* Disabled state */
+fluent-text-field[disabled] ::deep .control,
+fluent-text-area[disabled] ::deep .control,
+fluent-number-field[disabled] ::deep .control,
+fluent-search[disabled] ::deep .control,
+fluent-combobox[disabled] ::deep .control,
+fluent-select[disabled] ::deep .control {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--bg-2) !important;
+}
+
+fluent-text-field[disabled] ::deep input,
+fluent-text-area[disabled] ::deep textarea,
+fluent-number-field[disabled] ::deep input,
+fluent-search[disabled] ::deep input,
+fluent-combobox[disabled] ::deep input,
+fluent-select[disabled] ::deep input {
+    cursor: not-allowed;
+    color: var(--text-2) !important;
+}
+
+
+
+
+

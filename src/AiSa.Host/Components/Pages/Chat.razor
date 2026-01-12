@@ -1,60 +1,98 @@
 @page "/chat"
 @rendermode InteractiveServer
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.FluentUI.AspNetCore.Components
 
 <PageTitle>Chat</PageTitle>
 
-<div class="chat-page">
-    <div class="chat-header">
-        <h1 class="text-title">Chat</h1>
-        <p class="text-label">Chat with the AI assistant</p>
-    </div>
-
-    <div class="chat-messages">
-        @if (!messages.Any())
-        {
-            <div class="chat-empty-state">
-                <p class="text-body">No messages yet. Start a conversation below.</p>
+<div class="page-content">
+    @if (!heroDismissed)
+    {
+        <div class="surface-hero">
+            <div class="hero-header">
+                <h1 class="text-title text-title-gradient">Chat</h1>
+                <FluentButton Appearance="Appearance.Stealth"
+                             OnClick="DismissHero"
+                             Title="Dismiss"
+                             class="hero-dismiss-button">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
+                </FluentButton>
             </div>
-        }
-        else
-        {
-            @foreach (var message in messages)
+            <p class="text-body">Chat with the AI assistant to get answers, insights, and assistance powered by enterprise GenAI capabilities.</p>
+    </div>
+    }
+
+    <div class="chat-page">
+        <div class="chat-messages">
+            @if (!messages.Any())
             {
-                <div class="chat-message @message.CssClass">
-                    <div class="message-content">
-                        <div class="message-header">
-                            <span class="message-role">@message.Role</span>
-                            @if (!string.IsNullOrEmpty(message.CorrelationId))
-                            {
-                                <span class="message-correlation-id">ID: @message.CorrelationId</span>
-                            }
-                        </div>
-                        <div class="message-text">@message.Text</div>
+                <div class="chat-empty-state">
+                    <div class="empty-state-icon">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Chat())" />
                     </div>
+                    <h3 class="empty-state-title">Start a conversation</h3>
+                    <p class="empty-state-text">Ask me anything and I'll help you get answers.</p>
                 </div>
             }
-        }
-        
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="chat-error">
-                <p class="text-body" style="color: var(--danger-0);">@errorMessage</p>
-            </div>
-        }
-    </div>
+            else
+            {
+                @foreach (var message in messages)
+                {
+                    <div class="chat-message @message.CssClass">
+                        <div class="message-avatar">
+                            @if (message.Role == "User")
+                            {
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Person())" />
+                            }
+                            else
+                            {
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
+                            }
+                        </div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-role">@message.Role</span>
+                                @if (!string.IsNullOrEmpty(message.CorrelationId))
+                                {
+                                    <span class="message-correlation-id">ID: @message.CorrelationId</span>
+                                }
+                            </div>
+                            <div class="message-text">@message.Text</div>
+                        </div>
+                    </div>
+                }
+            }
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="chat-error">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Alert())" />
+                    <p class="text-body" style="color: var(--danger-0);">@errorMessage</p>
+                </div>
+            }
+        </div>
 
-    <div class="chat-input-area">
-        <FluentTextField @bind-Value="currentMessage" 
-                         Placeholder="Type your message here and press Enter or click Send..." 
-                         class="chat-input"
-                         disabled="@isSending">
-        </FluentTextField>
-        <FluentButton Appearance="Appearance.Accent" 
-                      OnClick="HandleSend"
-                      disabled="@(string.IsNullOrWhiteSpace(currentMessage) || isSending)"
-                      class="chat-send-button">
-            <span>📤</span> Send
-        </FluentButton>
+        <div class="chat-input-container">
+            <div class="chat-input-area">
+                <FluentTextField Value="@currentMessage" 
+                                 ValueChanged="@((string value) => { currentMessage = value; StateHasChanged(); })"
+                                 Placeholder="Type your message..." 
+                                 class="chat-input"
+                                 disabled="@isSending"
+                                 @onkeydown="HandleKeyDown"
+                                 @oninput="HandleInput"
+                                 IconStart="@(new Icons.Regular.Size16.Edit())">
+                </FluentTextField>
+                <FluentButton Appearance="Appearance.Accent" 
+                              OnClick="HandleSend"
+                              disabled="@(string.IsNullOrWhiteSpace(currentMessage) || isSending)"
+                              class="chat-send-button"
+                              IconStart="@(new Icons.Regular.Size16.Send())"
+                              Title="Send message">
+                    Send
+                </FluentButton>
+            </div>
+        </div>
     </div>
 </div>
 

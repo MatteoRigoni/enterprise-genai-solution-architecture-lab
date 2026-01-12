@@ -2,6 +2,7 @@ using AiSa.Application;
 using AiSa.Host;
 using AiSa.Host.Components;
 using AiSa.Host.Endpoints;
+using AiSa.Host.Handlers;
 using AiSa.Host.Middleware;
 using AiSa.Host.Services;
 using AiSa.Infrastructure;
@@ -39,6 +40,32 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.Authent
 // UI services
 builder.Services.AddScoped<ILoadingService, LoadingService>();
 builder.Services.AddScoped<IToastNotificationService, ToastNotificationService>();
+builder.Services.AddScoped<IUiSession, UiSession>();
+
+// API call tracking store (singleton)
+builder.Services.AddSingleton<IApiCallStore, ApiCallStore>();
+builder.Services.AddHostedService<ApiCallStoreCleanupService>();
+
+// Register HttpClient with UI session header handler for Blazor components
+builder.Services.AddScoped<HttpClient>(sp =>
+{
+    var uiSession = sp.GetRequiredService<IUiSession>();
+    var handler = new UiSessionHeaderHandler(uiSession)
+    {
+        InnerHandler = new HttpClientHandler()
+    };
+    var httpClient = new HttpClient(handler);
+    
+    // Set base address if needed (for relative URLs in Blazor Server)
+    var httpContextAccessor = sp.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+    if (httpContextAccessor?.HttpContext != null)
+    {
+        var request = httpContextAccessor.HttpContext.Request;
+        httpClient.BaseAddress = new Uri($"{request.Scheme}://{request.Host}");
+    }
+    
+    return httpClient;
+});
 
 // App services
 builder.Services.AddScoped<ILLMClient, MockLLMClient>();
@@ -136,6 +163,9 @@ app.UseWhen(
     {
         // Correlation ID middleware: ensures traceability across logs and distributed systems
         api.UseMiddleware<CorrelationIdMiddleware>();
+
+        // API call tracking middleware: records metadata for UI sessions
+        api.UseMiddleware<ApiCallTrackingMiddleware>();
 
         // Uses IExceptionHandler (GlobalExceptionHandler) + ProblemDetails
         api.UseExceptionHandler();

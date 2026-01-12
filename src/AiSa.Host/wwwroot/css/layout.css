@@ -111,5 +111,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
+  padding-top: var(--s-5);
 }
 

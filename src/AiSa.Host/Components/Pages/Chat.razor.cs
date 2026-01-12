@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using AiSa.Application.Models;
 using AiSa.Host.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace AiSa.Host.Components.Pages;
 
@@ -11,6 +12,7 @@ public partial class Chat
     private string currentMessage = string.Empty;
     private bool isSending = false;
     private string? errorMessage = null;
+    private bool heroDismissed = false;
 
     [Inject]
     private HttpClient Http { get; set; } = default!;
@@ -90,6 +92,26 @@ public partial class Chat
                 isSending = false;
             }
         }, key: "chat-send");
+    }
+
+    private void DismissHero()
+    {
+        heroDismissed = true;
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await HandleSend();
+        }
+    }
+
+    private void HandleInput(ChangeEventArgs e)
+    {
+        // Update immediately on every keystroke for reactive button state
+        currentMessage = e.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
     }
 }
 
