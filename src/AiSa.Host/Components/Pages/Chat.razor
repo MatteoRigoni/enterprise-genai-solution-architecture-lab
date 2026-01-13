@@ -23,7 +23,8 @@
     }
 
     <div class="chat-page">
-        <div class="chat-messages">
+        <div class="chat-conversation-container">
+            <div class="chat-messages">
             @if (!messages.Any())
             {
                 <div class="chat-empty-state">
@@ -52,12 +53,15 @@
                         <div class="message-content">
                             <div class="message-header">
                                 <span class="message-role">@message.Role</span>
-                                @if (!string.IsNullOrEmpty(message.CorrelationId))
-                                {
-                                    <span class="message-correlation-id">ID: @message.CorrelationId</span>
-                                }
                             </div>
                             <div class="message-text">@message.Text</div>
+                            <div class="message-meta">
+                                <div class="message-timestamp">@message.Timestamp.ToString("HH:mm")</div>
+                                @if (!string.IsNullOrEmpty(message.CorrelationId))
+                                {
+                                    <div class="message-correlation-id">ID: @message.CorrelationId</div>
+                                }
+                            </div>
                         </div>
                     </div>
                 }
@@ -70,9 +74,9 @@
                     <p class="text-body" style="color: var(--danger-0);">@errorMessage</p>
                 </div>
             }
-        </div>
+            </div>
 
-        <div class="chat-input-container">
+            <div class="chat-input-container">
             <div class="chat-input-area">
                 <FluentTextField Value="@currentMessage" 
                                  ValueChanged="@((string value) => { currentMessage = value; StateHasChanged(); })"
@@ -92,6 +96,7 @@
                     Send
                 </FluentButton>
             </div>
+        </div>
         </div>
     </div>
 </div>

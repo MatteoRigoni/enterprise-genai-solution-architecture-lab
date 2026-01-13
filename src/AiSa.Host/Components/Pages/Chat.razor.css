@@ -5,24 +5,38 @@
     flex-direction: column;
     min-height: 0;
     flex: 1;
-    gap: var(--s-3);
-    height: 100%;
+    align-items: center; /* Center the conversation area */
 }
 
-/* Messages Area - Modern scrollable container */
+/* Conversation Container - Same width as hero (no max-width restriction) */
+.chat-conversation-container {
+    width: 100%;
+    /* No max-width - matches hero width (content-container max-width: 1400px) */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: var(--s-2); /* Reduced gap for better density */
+}
+
+/* Messages Area - Modern scrollable container with subtle background */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: var(--s-3);
-    padding: var(--s-4);
+    gap: var(--s-2); /* Reduced gap between messages */
+    padding: var(--s-4) var(--s-3); /* Reduced vertical padding */
     background-color: var(--bg-1);
     border-radius: var(--r-3);
     border: 1px solid var(--border-0);
     min-height: 0;
     scroll-behavior: smooth;
+    /* Subtle background differentiation */
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(91, 141, 239, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(167, 139, 250, 0.03) 0%, transparent 50%);
 }
 
 /* Empty State - Modern design with icon */
@@ -38,10 +52,19 @@
 }
 
 .empty-state-icon {
-    color: var(--text-2);
-    opacity: 0.6;
     margin-bottom: var(--s-2);
     animation: fadeIn 300ms ease-out;
+}
+
+/* Empty state icon - FluentIcon component needs ::deep */
+.empty-state-icon ::deep fluent-icon {
+    color: var(--text-2);
+    opacity: 0.6;
+}
+
+.empty-state-icon ::deep fluent-icon svg {
+    fill: var(--text-2);
+    opacity: 0.6;
 }
 
 .empty-state-title {
@@ -61,12 +84,14 @@
     animation: fadeIn 500ms ease-out;
 }
 
-/* Message Container - Modern chat bubble design */
+/* Message Container - Modern chat bubble design with consistent grid alignment */
 .chat-message {
     display: flex;
     width: 100%;
     gap: var(--s-2);
     animation: slideIn 200ms ease-out;
+    align-items: flex-start; /* Align avatar to top of bubble */
+    max-width: 100%;
 }
 
 @keyframes fadeIn {
@@ -106,7 +131,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    margin-top: var(--s-1);
+    margin-top: 0; /* Aligned to bubble top */
+    align-self: flex-start; /* Ensure vertical alignment with bubble */
 }
 
 .user-message .message-avatar {
@@ -171,35 +197,47 @@
 }
 
 .message-content {
-    max-width: 70%;
+    max-width: 640px; /* Optimal reading width (65-75 characters per line) */
     padding: var(--s-3) var(--s-4);
     background-color: var(--bg-2);
     border: 1px solid var(--border-0);
     border-radius: var(--r-2);
     box-shadow: var(--shadow-1);
     position: relative;
+    transition: box-shadow 150ms ease-out, transform 100ms ease-out;
 }
 
+/* Hover state for bubbles (subtle feedback) */
+.message-content:hover {
+    box-shadow: var(--shadow-2);
+    transform: translateY(-1px);
+}
+
+/* User message - Light blue tint with dark text (better readability) */
 .user-message .message-content {
-    background-color: #60a5fa; /* Light blue/azzurrino - softer than accent-primary */
-    border-color: #60a5fa;
-    color: var(--text-0);
+    background-color: rgba(96, 165, 250, 0.15); /* Light blue tint (15% opacity) */
+    border-left: 3px solid #3b82f6; /* Accent border on left */
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--text-0); /* Dark text for readability */
     border-bottom-right-radius: var(--r-1);
 }
 
+/* Assistant message - Light purple tint with dark text (better readability) */
 .assistant-message .message-content {
-    background-color: #a78bfa; /* Light purple/violet - softer than avatar */
-    border-color: #a78bfa;
-    color: #ffffff; /* White text for better contrast on purple */
+    background-color: rgba(167, 139, 250, 0.15); /* Light purple tint (15% opacity) */
+    border-left: 3px solid #a855f7; /* Accent border on left */
+    border-color: rgba(168, 85, 247, 0.3);
+    color: var(--text-0); /* Dark text for readability */
     border-bottom-left-radius: var(--r-1);
 }
 
+/* Text colors - dark for readability on light tints */
 .assistant-message .message-text {
-    color: #ffffff; /* White text on purple background */
+    color: var(--text-0); /* Dark text on light purple tint */
 }
 
-.assistant-message .message-role {
-    color: rgba(255, 255, 255, 0.95); /* White role text on purple */
+.user-message .message-text {
+    color: var(--text-0); /* Dark text on light blue tint */
 }
 
 .message-header {
@@ -212,51 +250,77 @@
 
 .message-role {
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.78125rem; /* 12.5px - slightly smaller */
     color: var(--text-1);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.8;
+    letter-spacing: 0.7px;
+    opacity: 0.85; /* Slightly less visible */
 }
 
 .user-message .message-role {
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-1);
     font-weight: 700;
-    opacity: 1;
+    opacity: 0.85;
 }
 
 .assistant-message .message-role {
-    color: var(--text-2);
+    color: var(--text-1);
     font-weight: 700;
-    opacity: 0.9;
-}
-
-.message-correlation-id {
-    font-size: 0.75rem;
-    color: var(--text-2);
-    font-family: 'Courier New', monospace;
-    opacity: 0.7;
-}
-
-.user-message .message-correlation-id {
-    color: rgba(255, 255, 255, 0.7);
+    opacity: 0.85;
 }
 
 .message-text {
-    color: var(--text-1);
-    line-height: 1.6;
+    color: var(--text-0);
+    font-size: 0.9375rem; /* 15px - optimal reading size */
+    line-height: 1.5; /* 1.4-1.55 range for readability */
     white-space: pre-wrap;
     word-wrap: break-word;
 }
 
-.user-message .message-text {
-    color: #000000 !important; /* Fixed black - independent of theme */
+/* Message meta - timestamp and correlation ID in same row */
+.message-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--s-2);
+    gap: var(--s-2);
 }
 
-/* Input Container - Simple flex layout */
+.message-timestamp {
+    font-size: 0.71875rem; /* 11.5px - slightly smaller */
+    color: var(--text-2);
+    opacity: 0.75; /* Less visible */
+    font-weight: 500;
+}
+
+.user-message .message-timestamp {
+    color: var(--text-2);
+    opacity: 0.75;
+}
+
+.assistant-message .message-timestamp {
+    color: var(--text-2);
+    opacity: 0.75;
+}
+
+.message-correlation-id {
+    font-size: 0.71875rem; /* 11.5px - same size as timestamp */
+    color: var(--text-2);
+    font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+    opacity: 0.65; /* Less visible */
+    font-weight: 500;
+}
+
+/* Input Container - Sticky and integrated, same width as conversation */
 .chat-input-container {
     width: 100%;
+    /* No max-width - matches conversation container and hero width */
     padding-top: var(--s-2);
+    position: sticky;
+    bottom: 0;
+    background-color: var(--bg-0);
+    padding-bottom: var(--s-2);
+    z-index: 10;
 }
 
 .chat-input-area {
@@ -266,7 +330,7 @@
     background-color: var(--bg-2);
     border: 1px solid var(--border-0);
     border-radius: var(--r-3);
-    align-items: center;
+    align-items: stretch; /* Stretch to same height */
     box-shadow: var(--shadow-1);
     transition: box-shadow 150ms ease-out, border-color 150ms ease-out;
 }
@@ -274,6 +338,8 @@
 .chat-input-area:focus-within {
     border-color: var(--accent-primary);
     box-shadow: var(--shadow-2);
+    outline: 2px solid var(--accent-primary-alpha); /* WCAG focus ring */
+    outline-offset: 2px;
 }
 
 /* Textbox - takes all available space */
@@ -283,10 +349,24 @@
     width: 100% !important;
 }
 
-/* Button - fixed width, aligned to end */
+/* Button - compact, aligned to end */
 .chat-input-area ::deep fluent-button.chat-send-button {
     flex-shrink: 0;
-    min-width: 100px;
+    min-width: 80px; /* More compact */
+    align-self: stretch; /* Match input height */
+}
+
+/* Focus ring for accessibility (WCAG AA) - target internal .control elements */
+.chat-input-area ::deep fluent-text-field:focus-within .control {
+    outline: 2px solid var(--accent-primary) !important;
+    outline-offset: 2px !important;
+    border-radius: var(--r-1) !important;
+}
+
+.chat-input-area ::deep fluent-button:focus-visible .control {
+    outline: 2px solid var(--accent-primary) !important;
+    outline-offset: 2px !important;
+    border-radius: var(--r-1) !important;
 }
 
 /* Scrollbar Styling */
@@ -322,9 +402,14 @@
     animation: slideIn 200ms ease-out;
 }
 
-.chat-error fluent-icon {
+/* Error icon - FluentIcon component needs ::deep */
+.chat-error ::deep fluent-icon {
     color: var(--danger-0);
     flex-shrink: 0;
+}
+
+.chat-error ::deep fluent-icon svg {
+    fill: var(--danger-0);
 }
 
 .chat-error ::deep .text-body {
@@ -334,6 +419,10 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .chat-conversation-container {
+        max-width: 100%;
+    }
+
     .chat-messages {
         padding: var(--s-3);
     }
@@ -348,14 +437,17 @@
         height: 28px;
     }
 
+    .chat-input-container {
+        max-width: 100%;
+    }
+
     .chat-input-area {
         padding: var(--s-2);
     }
 
-    .chat-send-button {
-        min-width: 80px;
-        height: 40px;
-        padding: var(--s-1) var(--s-2);
+    /* Button in media query - needs ::deep */
+    .chat-input-area ::deep fluent-button.chat-send-button {
+        min-width: 70px;
     }
 
     .empty-state-title {
@@ -368,8 +460,16 @@
 }
 
 @media (max-width: 480px) {
+    .chat-conversation-container {
+        max-width: 100%;
+    }
+
     .message-content {
         max-width: 90%;
+    }
+
+    .chat-input-container {
+        max-width: 100%;
     }
 
     .chat-input-area {
@@ -377,7 +477,8 @@
         gap: var(--s-2);
     }
 
-    .chat-send-button {
+    /* Button in media query - needs ::deep */
+    .chat-input-area ::deep fluent-button.chat-send-button {
         width: 100%;
     }
 }

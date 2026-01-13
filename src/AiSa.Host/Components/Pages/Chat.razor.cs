@@ -3,6 +3,7 @@ using AiSa.Application.Models;
 using AiSa.Host.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Logging;
 
 namespace AiSa.Host.Components.Pages;
 
@@ -20,6 +21,9 @@ public partial class Chat
     [Inject]
     private ILoadingService LoadingService { get; set; } = default!;
 
+    [Inject]
+    private ILogger<Chat> Logger { get; set; } = default!;
+
     private async Task HandleSend()
     {
         if (string.IsNullOrWhiteSpace(currentMessage) || isSending)
@@ -31,7 +35,8 @@ public partial class Chat
         {
             Role = "User",
             Text = userMessage,
-            CssClass = "user-message"
+            CssClass = "user-message",
+            Timestamp = DateTimeOffset.Now
         });
 
         var messageToSend = currentMessage;
@@ -64,28 +69,43 @@ public partial class Chat
                             Role = "Assistant",
                             Text = chatResponse.Response,
                             CorrelationId = chatResponse.CorrelationId,
-                            CssClass = "assistant-message"
+                            CssClass = "assistant-message",
+                            Timestamp = DateTimeOffset.Now
                         });
                     }
                 }
                 else
                 {
                     // Handle error response (ProblemDetails)
-                    errorMessage = $"Error: {response.StatusCode}";
+                    // Log technical details internally, show user-friendly message
                     var problemDetails = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(cancellationToken: cancellationToken);
-                    if (problemDetails?.Detail != null)
-                    {
-                        errorMessage = problemDetails.Detail;
-                    }
+                    
+                    Logger.LogError(
+                        "Chat API error. StatusCode: {StatusCode}, Path: /api/chat, Detail: {Detail}, CorrelationId: {CorrelationId}",
+                        response.StatusCode,
+                        problemDetails?.Detail ?? "Unknown error",
+                        problemDetails?.Extensions?.TryGetValue("correlationId", out var corrId) == true ? corrId : null);
+                    
+                    // Show user-friendly message only
+                    errorMessage = "Unable to send message. Please try again later.";
                 }
             }
             catch (HttpRequestException ex)
             {
-                errorMessage = $"Network error: {ex.Message}";
+                // Log technical details internally
+                Logger.LogError(ex, "Network error while sending chat message. Message: {Message}", ex.Message);
+                
+                // Show user-friendly message only
+                errorMessage = "Network error. Please check your connection and try again.";
             }
             catch (Exception ex)
             {
-                errorMessage = $"An error occurred: {ex.Message}";
+                // Log technical details internally
+                Logger.LogError(ex, "Unexpected error while sending chat message. ExceptionType: {ExceptionType}, Message: {Message}", 
+                    ex.GetType().Name, ex.Message);
+                
+                // Show user-friendly message only
+                errorMessage = "An unexpected error occurred. Please try again later.";
             }
             finally
             {
@@ -121,5 +141,6 @@ public class ChatMessage
     public string Text { get; set; } = string.Empty;
     public string? CorrelationId { get; set; }
     public string CssClass { get; set; } = string.Empty;
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.Now;
 }
 

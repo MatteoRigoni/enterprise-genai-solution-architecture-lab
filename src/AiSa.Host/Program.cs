@@ -17,6 +17,8 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // UI (Blazor Server)
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -56,12 +58,22 @@ builder.Services.AddScoped<HttpClient>(sp =>
     };
     var httpClient = new HttpClient(handler);
     
-    // Set base address if needed (for relative URLs in Blazor Server)
-    var httpContextAccessor = sp.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
-    if (httpContextAccessor?.HttpContext != null)
+    // Set base address for relative URLs in Blazor Server
+    // Try NavigationManager first (most reliable in Blazor Server), fallback to HttpContext
+    var navigationManager = sp.GetService<Microsoft.AspNetCore.Components.NavigationManager>();
+    if (navigationManager != null)
     {
-        var request = httpContextAccessor.HttpContext.Request;
-        httpClient.BaseAddress = new Uri($"{request.Scheme}://{request.Host}");
+        httpClient.BaseAddress = new Uri(navigationManager.BaseUri);
+    }
+    else
+    {
+        // Fallback to HttpContext if NavigationManager is not available
+        var httpContextAccessor = sp.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+        if (httpContextAccessor?.HttpContext != null)
+        {
+            var request = httpContextAccessor.HttpContext.Request;
+            httpClient.BaseAddress = new Uri($"{request.Scheme}://{request.Host}");
+        }
     }
     
     return httpClient;
@@ -145,6 +157,8 @@ builder.Services.AddOpenTelemetry()
         .AddConsoleExporter());
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 if (!app.Environment.IsDevelopment())
 {
