@@ -52,6 +52,7 @@ Make the system operable: traces, metrics, logs (safe), and actionable runbooks.
 
 ### Related context
 - docs/architecture.md
+- docs/observability-local.md (Local dev setup with Aspire Dashboard)
 - docs/runbooks/incident-latency.md
 - docs/runbooks/incident-cost-spike.md
 - docs/quality.md

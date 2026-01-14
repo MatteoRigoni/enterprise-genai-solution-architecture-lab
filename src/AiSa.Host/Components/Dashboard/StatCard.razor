@@ -1,0 +1,40 @@
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components
+
+<div class="stat-card">
+    @if (Icon != null)
+    {
+        <div class="stat-card-icon">
+            @Icon
+        </div>
+    }
+    <div class="stat-card-content">
+        <div class="stat-card-label">@Label</div>
+        <div class="stat-card-value">@Value</div>
+        @if (!string.IsNullOrWhiteSpace(Badge))
+        {
+            <div class="stat-card-badge @BadgeType.ToLowerInvariant()">
+                @Badge
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public RenderFragment? Icon { get; set; }
+
+    [Parameter]
+    public string? Badge { get; set; }
+
+    [Parameter]
+    public string BadgeType { get; set; } = "info"; // success, warning, error, info
+}
+

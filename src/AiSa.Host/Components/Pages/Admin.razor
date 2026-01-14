@@ -1,0 +1,33 @@
+@page "/admin"
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.FluentUI.AspNetCore.Components
+
+<PageTitle>Admin</PageTitle>
+
+<div class="page-content">
+    @if (!heroDismissed)
+    {
+        <div class="surface-hero">
+            <div class="hero-header">
+                <h1 class="text-title text-title-gradient">Admin</h1>
+                <FluentButton Appearance="Appearance.Stealth"
+                             OnClick="DismissHero"
+                             Title="Dismiss"
+                             class="hero-dismiss-button">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
+                </FluentButton>
+            </div>
+            <p class="text-body">Coming soon - Administration and configuration interface will be implemented here.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private bool heroDismissed = false;
+
+    private void DismissHero()
+    {
+        heroDismissed = true;
+    }
+}
+

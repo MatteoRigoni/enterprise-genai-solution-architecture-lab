@@ -1,30 +1,96 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">AiSa.Host</a>
+﻿@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@inject IDialogService DialogService
+
+<nav class="sidebar-nav">
+    <div class="sidebar-brand">
+        <div class="brand-logo">
+            <img src="/images/logo-app.png" alt="AiSa Portal" class="brand-image" />
+        </div>
+        <div class="brand-text">
+            <h2 class="brand-title">AiSa Portal</h2>
+            <p class="brand-subtitle">AI Solution Architecture</p>
+        </div>
     </div>
-</div>
+    
+    <div class="nav-menu">
+        <NavLink href="/" Match="NavLinkMatch.All" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Home())" class="nav-icon" />
+            <span>Home</span>
+        </NavLink>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+        <NavLink href="/chat" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Chat())" class="nav-icon" />
+            <span>Chat</span>
+        </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+        <NavLink href="/agent" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Bot())" class="nav-icon" />
+            <span>Agent</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+        <NavLink href="/documents" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Document())" class="nav-icon" />
+            <span>Documents</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+        <NavLink href="/evaluations" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.CheckmarkCircle())" class="nav-icon" />
+            <span>Evaluations</span>
+        </NavLink>
 
+        <NavLink href="/observability" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.FlowchartCircle())" class="nav-icon" />
+            <span>Observability</span>
+        </NavLink>
+
+        <NavLink href="/cost" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Money())" class="nav-icon" />
+            <span>Cost</span>
+        </NavLink>
+
+        <NavLink href="/governance" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Shield())" class="nav-icon" />
+            <span>Governance</span>
+        </NavLink>
+
+        <NavLink href="/security-compliance" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" class="nav-icon" />
+            <span>Security/Compliance</span>
+        </NavLink>
+    </div>
+
+    <div class="nav-footer">
+        <NavLink href="/whatsnew" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Star())" class="nav-icon" />
+            <span>What's New</span>
+        </NavLink>
+
+        <NavLink href="/help" class="nav-item">
+            <FluentIcon Value="@(new Icons.Regular.Size24.QuestionCircle())" class="nav-icon" />
+            <span>Help & Docs</span>
+        </NavLink>
+
+        <button @onclick="OpenAdminPanel" class="nav-item admin-button">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Settings())" class="nav-icon" />
+            <span>Admin</span>
+        </button>
+    </div>
+</nav>
+
+@code {
+    private async Task OpenAdminPanel()
+    {
+        var parameters = new DialogParameters
+        {
+            Alignment = HorizontalAlignment.Right,
+            Title = " ",
+            Width = "400px",
+            Modal = false,
+            PrimaryAction=null,
+            SecondaryAction=null
+            
+        };
+
+        await DialogService.ShowPanelAsync<AdminPanel>(parameters);
+    }
+}

@@ -1,18 +1,24 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
+<FluentDialogProvider />
+<FluentToastProvider Position="ToastPosition.BottomRight" />
+<LoadingOverlay />
+
+<div class="app-shell">
     <div class="sidebar">
         <NavMenu />
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <div class="top-bar">
+        <TopBar />
+    </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="main-content">
+        <div class="content-container">
+            <div class="page-container">
+                @Body
+            </div>
+        </div>
     </main>
 </div>
 

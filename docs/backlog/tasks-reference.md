@@ -2,7 +2,7 @@
 
 ## Roadmap
 
-**Order:** T01 -> T02 -> T03 -> T04 -> T05 -> T06 -> T06A -> T07 -> T08 -> T09 -> T10 -> T11 -> T12 -> T13 -> T14
+**Order:** T01 -> T02 -> T03 -> T04 -> T05 -> T06 -> T06A -> T07 -> T08 -> T09 -> T10 -> T11 -> T12 -> T13 -> T14 -> T15
 
 **Global completion rules (per ticket):**
 
@@ -375,8 +375,39 @@ Move from “token tracking” to real FinOps: cost-to-value governance and deci
 
 ### Acceptance Criteria
 - You can answer:
-  - “What does one success cost?”
-  - “What happens if costs double?”
-  - “How do we decide whether agent mode is worth it?”
+  - "What does one success cost?"
+  - "What happens if costs double?"
+  - "How do we decide whether agent mode is worth it?"
 - Portal shows at least one cost-to-value view.
+
+## T15 — Codebase Documentation via MCP + Global Search Integration
+
+### Goal
+Enable search and documentation of the project codebase itself using Model Context Protocol (MCP), integrated with the global search toolbar in the portal.
+
+### Scope
+- MCP Server implementation:
+  - Scan and index codebase structure (files, classes, methods, ADRs, docs)
+  - Generate structured documentation metadata
+  - Expose codebase context via MCP protocol
+- Global Search integration:
+  - Implement search endpoint: GET /api/search?q={query}
+  - Search across both: external documents (RAG) + codebase (MCP)
+  - Unified results with source type indicators
+- TopBar search functionality:
+  - Connect search input to /api/search endpoint
+  - Display results in dropdown or dedicated search page
+  - Show source type (Document, Code, ADR, etc.)
+- Codebase indexing:
+  - Index key files: source code, ADRs, architecture docs
+  - Extract metadata: file paths, class names, function signatures, doc comments
+  - Store in searchable format (can reuse vector store or separate index)
+
+### Acceptance Criteria
+- Search toolbar returns results from both documents and codebase.
+- MCP server exposes codebase structure and can answer questions about project architecture.
+- Search results clearly indicate source type (document vs codebase).
+- Codebase indexing excludes sensitive files (secrets, keys, etc.).
+- Add ADR: MCP integration strategy and codebase indexing approach.
+- Telemetry spans: search.query, mcp.codebase.query
 

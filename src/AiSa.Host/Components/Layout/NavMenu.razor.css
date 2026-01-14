@@ -1,105 +1,231 @@
-.navbar-toggler {
-    appearance: none;
-    cursor: pointer;
-    width: 3.5rem;
-    height: 2.5rem;
-    color: white;
-    position: absolute;
-    top: 0.5rem;
-    right: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
+/* Navigation Menu - Dark Premium Sidebar */
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--s-2);
+    overflow: hidden;
 }
 
-.navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, 0.5);
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: var(--s-1) 0;
+    border-bottom: 1px solid var(--border-0);
+    margin-bottom: var(--s-3);
 }
 
-.top-row {
-    min-height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
+.brand-logo {
+    flex-shrink: 0;
 }
 
-.navbar-brand {
-    font-size: 1.1rem;
+.brand-image {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    filter: brightness(1.5) contrast(1.3);
+    transition: filter 150ms ease-out;
 }
 
-.bi {
-    display: inline-block;
+.brand-image:hover {
+    filter: brightness(1.7) contrast(1.4);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-);
+    flex: 1;
+    min-width: 0;
+}
+
+.brand-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent; /* Fallback for browsers that don't support background-clip */
+    line-height: 1.2;
+}
+
+.brand-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--text-2);
+    line-height: 1.4;
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.nav-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: var(--s-2);
+    border-top: 1px solid var(--border-0);
+    margin-top: var(--s-2);
+    flex-shrink: 0;
+}
+
+/* NavLink renders the <a>, so we need ::deep */
+.sidebar-nav ::deep .nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-1) var(--s-2);
+    color: var(--text-1);
+    text-decoration: none;
+    border-radius: var(--r-1);
+    transition: all 150ms ease-out;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    white-space: nowrap;
     position: relative;
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-right: 0.75rem;
-    top: -1px;
-    background-size: cover;
+    --accent-fill-rest: var(--text-1); /* Override Fluent UI icon color variable */
 }
 
-.bi-house-door-fill-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-house-door-fill' viewBox='0 0 16 16'%3E%3Cpath d='M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z'/%3E%3C/svg%3E");
-}
-
-.bi-plus-square-fill-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-plus-square-fill' viewBox='0 0 16 16'%3E%3Cpath d='M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z'/%3E%3C/svg%3E");
-}
-
-.bi-list-nested-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-list-nested' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z'/%3E%3C/svg%3E");
-}
-
-.nav-item {
-    font-size: 0.9rem;
-    padding-bottom: 0.5rem;
-}
-
-    .nav-item:first-of-type {
-        padding-top: 1rem;
+    .sidebar-nav ::deep .nav-item:hover {
+        background-color: var(--bg-2);
+        color: var(--text-0);
+        border-color: var(--border-0);
+        --accent-fill-rest: var(--text-0); /* Override Fluent UI icon color on hover */
     }
 
-    .nav-item:last-of-type {
-        padding-bottom: 1rem;
+    .sidebar-nav ::deep .nav-item:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
     }
 
-    .nav-item ::deep .nav-link {
-        color: #d7d7d7;
-        background: none;
-        border: none;
-        border-radius: 4px;
-        height: 3rem;
-        display: flex;
-        align-items: center;
-        line-height: 3rem;
-        width: 100%;
+    .sidebar-nav ::deep .nav-item.active {
+        background-color: var(--accent-primary-alpha);
+        color: var(--accent-primary);
+        border-color: transparent;
+        --accent-fill-rest: var(--accent-primary); /* Override Fluent UI icon color for active item */
     }
 
-.nav-item ::deep a.active {
-    background-color: rgba(255,255,255,0.37);
-    color: white;
-}
-
-.nav-item ::deep .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
-    color: white;
-}
-
-.nav-scrollable {
-    display: none;
-}
-
-.navbar-toggler:checked ~ .nav-scrollable {
-    display: block;
-}
-
-@media (min-width: 641px) {
-    .navbar-toggler {
-        display: none;
+    /* Accent bar on the left for active item */
+    .sidebar-nav ::deep .nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background-color: var(--accent-primary);
+        border-radius: 0;
     }
 
-    .nav-scrollable {
-        /* Never collapse the sidebar for wide screens */
-        display: block;
+/* FluentIcon styling */
+.sidebar-nav ::deep .nav-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
-        overflow-y: auto;
+/* Default icon color - targets SVG fill inside FluentIcon */
+.sidebar-nav ::deep .nav-icon svg {
+    fill: var(--text-1) !important;
+}
+
+.sidebar-nav ::deep .nav-icon svg path {
+    fill: var(--text-1) !important;
+}
+
+/* Hover state icon color */
+.sidebar-nav ::deep .nav-item:hover .nav-icon svg {
+    fill: var(--text-0) !important;
+}
+
+.sidebar-nav ::deep .nav-item:hover .nav-icon svg path {
+    fill: var(--text-0) !important;
+}
+
+/* Active item icon color */
+.sidebar-nav ::deep .nav-item.active .nav-icon svg {
+    fill: var(--accent-primary) !important;
+}
+
+.sidebar-nav ::deep .nav-item.active .nav-icon svg path {
+    fill: var(--accent-primary) !important;
+}
+
+/* Text label styling */
+.sidebar-nav ::deep .nav-item > span:last-child {
+    flex: 1;
+}
+
+/* Admin button styling - same as nav-item */
+.sidebar-nav .admin-button {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-1) var(--s-2);
+    color: var(--text-1);
+    text-decoration: none;
+    border-radius: var(--r-1);
+    transition: all 150ms ease-out;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    position: relative;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    --accent-fill-rest: var(--text-1);
+}
+
+    .sidebar-nav .admin-button:hover {
+        background-color: var(--bg-2);
+        color: var(--text-0);
+        border-color: var(--border-0);
+        --accent-fill-rest: var(--text-0);
+    }
+
+    .sidebar-nav .admin-button:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+    }
+
+    .sidebar-nav .admin-button:active {
+        background-color: var(--bg-2);
+    }
+
+@media (max-width: 768px) {
+    .sidebar-nav {
+        padding: var(--s-2);
+    }
+
+    .brand-image {
+        width: 48px;
+        height: 48px;
+    }
+
+    .brand-title {
+        font-size: 1.125rem;
+    }
+
+    .brand-subtitle {
+        font-size: 0.8125rem;
     }
 }

@@ -1,0 +1,116 @@
+/* Layout - Application Shell */
+/* Fixed vertical sidebar, horizontal top bar, scrollable main content */
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  background-color: var(--bg-0);
+  color: var(--text-0);
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  transition: background-color 200ms ease-out, color 200ms ease-out;
+}
+
+/* Application Shell Container */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+/* Sidebar - Fixed vertical surface */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 280px;
+  height: 100vh;
+  background-color: var(--bg-1);
+  border-right: 1px solid var(--border-0);
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Bar - Horizontal surface */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 280px;
+  right: 0;
+  height: 64px;
+  background-color: var(--bg-1);
+  border-bottom: 1px solid var(--border-0);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s-4);
+  z-index: 90;
+  gap: var(--s-4);
+}
+
+/* Top Bar Layout - Two sections (center and right) */
+.top-bar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--s-2);
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: var(--s-2);
+}
+
+/* Main Content Area - Scrollable */
+.main-content {
+  margin-left: 280px;
+  margin-top: 64px;
+  height: calc(100vh - 64px);
+  padding: var(--s-3);
+  background-color: var(--bg-0);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Responsive Behavior - Desktop-first */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 180ms ease-out;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .top-bar {
+    left: 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Content Container */
+.content-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Page Container */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding-top: var(--s-5);
+}
+

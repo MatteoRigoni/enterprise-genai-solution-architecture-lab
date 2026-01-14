@@ -1,7 +1,184 @@
-﻿@page "/"
+@page "/"
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.FluentUI.AspNetCore.Components
+@using AiSa.Host.Components.Dashboard
+@using AiSa.Host.Services
+@implements IDisposable
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="page-content">
+    @if (!heroDismissed)
+    {
+        <div class="surface-hero">
+            <div class="hero-header">
+                <h1 class="text-title text-title-gradient">Welcome to AiSa Portal</h1>
+                <FluentButton Appearance="Appearance.Stealth"
+                             OnClick="DismissHero"
+                             Title="Dismiss"
+                             class="hero-dismiss-button">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
+                </FluentButton>
+            </div>
+            <p class="text-body">
+                This portal provides access to all enterprise GenAI capabilities including chat, agent orchestration,
+                document management, evaluations, observability, cost controls, governance, security, and administration.
+                This architectural showcase demonstrates how to build production-ready GenAI systems with proper attention
+                to compliance, cost control, and operational constraints.
+            </p>
+        </div>
+    }
 
-Welcome to your new app.
+    <!-- Overview Section -->
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Overview</h2>
+        <div class="dashboard-grid">
+            <StatCard Label="API Calls"
+                     Value="@totalCalls.ToString()">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Cloud())" />
+                </Icon>
+            </StatCard>
+            <StatCard Label="Errors"
+                     Value="@errorCount.ToString()"
+                     Badge="@(errorCount > 0 ? $"{errorCount} error{(errorCount != 1 ? "s" : "")}" : null)"
+                     BadgeType="@(errorCount > 0 ? "error" : "info")">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Alert())" />
+                </Icon>
+            </StatCard>
+            <StatCard Label="Avg Latency"
+                     Value="@FormatLatency(avgLatency)">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.ClockAlarm())" />
+                </Icon>
+            </StatCard>
+            <StatCard Label="Last Call"
+                     Value="@FormatLastCall(lastCallTimestamp)">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.ClockAlarm())" />
+                </Icon>
+            </StatCard>
+        </div>
+    </div>
+
+    <!-- Recent Calls Section -->
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Recent Calls</h2>
+        <RecentCallsTable Calls="@recentCalls" />
+    </div>
+</div>
+
+@code {
+    [Inject]
+    private IUiSession UiSession { get; set; } = default!;
+
+    [Inject]
+    private IApiCallStore ApiCallStore { get; set; } = default!;
+
+    private bool heroDismissed = false;
+    private int totalCalls = 0;
+    private int errorCount = 0;
+    private double avgLatency = 0;
+    private DateTimeOffset? lastCallTimestamp = null;
+    private IReadOnlyList<ApiCallRecord> recentCalls = Array.Empty<ApiCallRecord>();
+    private System.Threading.Timer? _debounceTimer;
+    private bool _pendingRefresh = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        RefreshStatistics();
+        
+        ApiCallStore.ApiCallRecorded += OnApiCallRecorded;
+    }
+
+    private void OnApiCallRecorded(object? sender, ApiCallRecordedEventArgs e)
+    {
+        if (e.SessionId != UiSession.SessionId)
+            return;
+        
+        _pendingRefresh = true;
+        
+        _debounceTimer?.Dispose();
+        _debounceTimer = new System.Threading.Timer(_ =>
+        {
+            if (_pendingRefresh)
+            {
+                _pendingRefresh = false;
+                InvokeAsync(RefreshStatistics);
+            }
+        }, null, TimeSpan.FromMilliseconds(150), Timeout.InfiniteTimeSpan);
+    }
+
+    private void RefreshStatistics()
+    {
+        var sessionId = UiSession.SessionId;
+        var stats = ApiCallStore.GetStatistics(sessionId);
+        
+        if (stats != null)
+        {
+            totalCalls = stats.TotalCalls;
+            errorCount = stats.ErrorCount;
+            avgLatency = stats.AverageLatencyMs;
+            lastCallTimestamp = stats.LastCallTimestamp;
+        }
+        else
+        {
+            totalCalls = 0;
+            errorCount = 0;
+            avgLatency = 0;
+            lastCallTimestamp = null;
+        }
+
+        recentCalls = ApiCallStore.GetRecentCalls(sessionId, 5);
+        StateHasChanged();
+    }
+
+    private string FormatLatency(double ms)
+    {
+        if (ms == 0)
+            return "-";
+        
+        if (ms < 1000)
+            return $"{ms:F0} ms";
+        else
+            return $"{ms / 1000:F1} s";
+    }
+
+    private string FormatLastCall(DateTimeOffset? timestamp)
+    {
+        if (timestamp == null)
+            return "-";
+
+        var now = DateTimeOffset.UtcNow;
+        var diff = now - timestamp.Value;
+
+        if (diff.TotalSeconds < 60)
+        {
+            var seconds = (int)diff.TotalSeconds;
+            return seconds == 0 ? "now" : $"{seconds}s ago";
+        }
+        else if (diff.TotalMinutes < 60)
+        {
+            var minutes = (int)diff.TotalMinutes;
+            return $"{minutes}m ago";
+        }
+        else
+        {
+            var hours = (int)diff.TotalHours;
+            return $"{hours}h ago";
+        }
+    }
+
+    private void DismissHero()
+    {
+        heroDismissed = true;
+    }
+
+    public void Dispose()
+    {
+        ApiCallStore.ApiCallRecorded -= OnApiCallRecorded;
+        _debounceTimer?.Dispose();
+    }
+}
