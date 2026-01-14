@@ -43,6 +43,7 @@ public partial class Chat
         currentMessage = string.Empty;
         errorMessage = null;
         isSending = true;
+        StateHasChanged(); // Force UI update to clear the input field immediately
 
         // Use centralized loading service with a specific key for chat operations
         await LoadingService.ExecuteWithLoadingAsync(async cancellationToken =>
@@ -127,12 +128,6 @@ public partial class Chat
         }
     }
 
-    private void HandleInput(ChangeEventArgs e)
-    {
-        // Update immediately on every keystroke for reactive button state
-        currentMessage = e.Value?.ToString() ?? string.Empty;
-        StateHasChanged();
-    }
 }
 
 public class ChatMessage

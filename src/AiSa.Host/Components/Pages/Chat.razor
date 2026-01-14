@@ -78,13 +78,11 @@
 
             <div class="chat-input-container">
             <div class="chat-input-area">
-                <FluentTextField Value="@currentMessage" 
-                                 ValueChanged="@((string value) => { currentMessage = value; StateHasChanged(); })"
+                <FluentTextField @bind-Value="currentMessage"
                                  Placeholder="Type your message..." 
                                  class="chat-input"
                                  disabled="@isSending"
                                  @onkeydown="HandleKeyDown"
-                                 @oninput="HandleInput"
                                  IconStart="@(new Icons.Regular.Size16.Edit())">
                 </FluentTextField>
                 <FluentButton Appearance="Appearance.Accent" 

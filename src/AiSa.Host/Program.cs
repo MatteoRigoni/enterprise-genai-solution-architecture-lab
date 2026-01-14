@@ -10,8 +10,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.FluentUI.AspNetCore.Components;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using System.Diagnostics;
 using System.Security.Claims;
 
@@ -143,18 +141,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enterprise GenAI Solution Architecture Lab - API Documentation"
     });
 });
-
-// OpenTelemetry tracing (avoid capturing request/response bodies)
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(r => r.AddService(serviceName: "AiSa.Host", serviceVersion: "1.0.0"))
-    .WithTracing(t => t
-        .AddSource("AiSa.Host")
-        .AddAspNetCoreInstrumentation(o =>
-        {
-            o.Filter = http => http.Request.Path.StartsWithSegments("/api");
-        })
-        .AddHttpClientInstrumentation()
-        .AddConsoleExporter());
 
 var app = builder.Build();
 
