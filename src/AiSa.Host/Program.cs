@@ -81,6 +81,11 @@ builder.Services.AddScoped<HttpClient>(sp =>
 builder.Services.AddScoped<ILLMClient, MockLLMClient>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// Vector store (Azure AI Search)
+builder.Services.Configure<AzureSearchOptions>(
+    builder.Configuration.GetSection("AzureSearch"));
+builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));
 
