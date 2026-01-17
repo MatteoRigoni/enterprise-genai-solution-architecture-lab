@@ -57,6 +57,15 @@ Implement document ingestion and retrieval using Azure AI Search as vector store
   - Chunk size: ~500-1000 tokens (configurable, default 800)
   - Overlap: ~100 tokens between chunks (configurable, default 100)
   - Preserve document structure (mark chunk boundaries)
+- **Token counting support:**
+  - Basic mode: character-based estimation (~4 chars/token)
+  - Advanced mode: SharpToken (tiktoken port) with cl100k_base encoding (compatible with text-embedding-ada-002)
+  - Configurable via `Chunking:Mode` setting
+- **Improved sentence splitting** (Advanced mode):
+  - Abbreviation detection (Dr., Mr., etc.)
+  - Better handling of punctuation and context
+- **Small chunk merging:**
+  - Configurable `MinChunkTokens` to merge chunks below threshold
 - Create `DocumentChunk` model with:
   - `Content` (text)
   - `ChunkId` (unique identifier)

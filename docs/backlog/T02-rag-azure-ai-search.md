@@ -45,8 +45,11 @@ Implement ingestion and retrieval using Azure AI Search as vector store, and sho
 
 ## Sources (passive)
 - Microsoft Learn: Azure AI Search vector search + semantic ranking
-- YouTube: “RAG architecture explained”
-- Blog: “Chunking strategies for RAG”
+- YouTube: "RAG architecture explained"
+- Blog: "Chunking strategies for RAG"
+
+## Related Documentation
+- [Chunking Strategies Guide](./chunking-strategies.md) - Detailed documentation on token counting modes and chunking strategies
 
 ### Related context
 - docs/architecture.md

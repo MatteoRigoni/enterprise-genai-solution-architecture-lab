@@ -81,6 +81,21 @@ builder.Services.AddScoped<HttpClient>(sp =>
 builder.Services.AddScoped<ILLMClient, MockLLMClient>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// Document chunking - register token counter based on mode
+var chunkingOptions = builder.Configuration.GetSection("Chunking").Get<ChunkingOptions>();
+if (chunkingOptions?.Mode == ChunkingMode.Advanced)
+{
+    builder.Services.AddSingleton<ITokenCounter, SharpTokenCounter>();
+}
+else
+{
+    builder.Services.AddSingleton<ITokenCounter, BasicTokenCounter>();
+}
+
+builder.Services.Configure<ChunkingOptions>(
+    builder.Configuration.GetSection("Chunking"));
+builder.Services.AddScoped<IDocumentChunker, DocumentChunker>();
+
 // Vector store (Azure AI Search)
 builder.Services.Configure<AzureSearchOptions>(
     builder.Configuration.GetSection("AzureSearch"));
