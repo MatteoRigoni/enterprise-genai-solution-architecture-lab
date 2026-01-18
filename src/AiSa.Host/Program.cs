@@ -96,6 +96,15 @@ builder.Services.Configure<ChunkingOptions>(
     builder.Configuration.GetSection("Chunking"));
 builder.Services.AddScoped<IDocumentChunker, DocumentChunker>();
 
+// Embedding service (Azure OpenAI)
+builder.Services.AddHttpClient(); // For AzureOpenAIEmbeddingService
+builder.Services.Configure<AzureOpenAIOptions>(
+    builder.Configuration.GetSection("AzureOpenAI"));
+builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
+
+// Document ingestion
+builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
+
 // Vector store (Azure AI Search)
 builder.Services.Configure<AzureSearchOptions>(
     builder.Configuration.GetSection("AzureSearch"));

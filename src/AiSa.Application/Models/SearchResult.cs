@@ -11,7 +11,10 @@ public class SearchResult
     public required DocumentChunk Chunk { get; init; }
 
     /// <summary>
-    /// Similarity score (higher is more similar, typically 0-1 range for cosine similarity).
+    /// Similarity score. Range depends on metric:
+    /// - cosine: typically 0-1 (or -1 to 1 for unnormalized), higher = more similar
+    /// - dotProduct: unbounded, higher = more similar (equivalent to cosine for normalized vectors)
+    /// - euclidean: distance (lower = more similar), typically positive values
     /// </summary>
     public required double Score { get; init; }
 }

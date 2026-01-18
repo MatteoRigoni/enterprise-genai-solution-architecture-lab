@@ -18,6 +18,7 @@ public class AzureSearchVectorStore : IVectorStore
     private readonly SearchClient _searchClient;
     private readonly SearchIndexClient _indexClient;
     private readonly string _indexName;
+    private readonly string _vectorSimilarityMetric;
     private readonly ILogger<AzureSearchVectorStore> _logger;
     private static readonly SemaphoreSlim _indexCreationLock = new(1, 1);
 
@@ -35,7 +36,17 @@ public class AzureSearchVectorStore : IVectorStore
             throw new ArgumentException("AzureSearch:IndexName is required", nameof(options));
 
         _indexName = config.IndexName;
+        _vectorSimilarityMetric = config.VectorSimilarityMetric ?? "cosine";
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Validate metric
+        var validMetrics = new[] { "cosine", "dotProduct", "euclidean" };
+        if (!validMetrics.Contains(_vectorSimilarityMetric, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                $"VectorSimilarityMetric must be one of: {string.Join(", ", validMetrics)}. Got: {_vectorSimilarityMetric}",
+                nameof(options));
+        }
 
         var endpoint = new Uri(config.Endpoint);
         var credential = !string.IsNullOrWhiteSpace(config.ApiKey)
@@ -116,9 +127,10 @@ public class AzureSearchVectorStore : IVectorStore
 
         // Log metadata only (ADR-0004)
         _logger.LogInformation(
-            "Searching index with vector dimension {VectorDimension}, topK: {TopK}",
+            "Searching index with vector dimension {VectorDimension}, topK: {TopK}, metric: {Metric}",
             queryVector.Length,
-            topK);
+            topK,
+            _vectorSimilarityMetric);
 
         // Create vector search query
         var searchOptions = new SearchOptions
@@ -235,7 +247,10 @@ public class AzureSearchVectorStore : IVectorStore
             catch (RequestFailedException ex) when (ex.Status == 404)
             {
                 // Index doesn't exist, create it
-                _logger.LogInformation("Creating Azure AI Search index: {IndexName}", _indexName);
+                _logger.LogInformation(
+                    "Creating Azure AI Search index: {IndexName} with similarity metric: {Metric}",
+                    _indexName,
+                    _vectorSimilarityMetric);
 
                 var index = new SearchIndex(_indexName)
                 {
@@ -296,4 +311,12 @@ public class AzureSearchOptions
     /// API key for authentication (or use managed identity later).
     /// </summary>
     public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Vector similarity metric: "cosine" (default), "dotProduct", or "euclidean".
+    /// - cosine: Measures angle between vectors, ignores magnitude (0-1 range typically)
+    /// - dotProduct: Includes magnitude, equivalent to cosine for normalized vectors
+    /// - euclidean: L2 distance, lower values = more similar
+    /// </summary>
+    public string VectorSimilarityMetric { get; set; } = "cosine";
 }
