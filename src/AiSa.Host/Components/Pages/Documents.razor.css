@@ -1,0 +1,356 @@
+/* Documents Page - Modern UI with FluentUI components */
+
+/* Upload Section */
+.upload-section {
+    padding: var(--s-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+}
+
+.upload-zone {
+    border: 2px dashed var(--border-0);
+    border-radius: var(--r-3);
+    padding: var(--s-5);
+    background-color: var(--bg-1);
+    transition: all 200ms ease-out;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-zone::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--glow-primary);
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+    pointer-events: none;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-2);
+    box-shadow: var(--shadow-2);
+}
+
+.upload-zone:hover::before {
+    opacity: 0.3;
+}
+
+.upload-zone.drag-over {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-2);
+    box-shadow: var(--shadow-2);
+    transform: scale(1.02);
+}
+
+.upload-zone.drag-over::before {
+    opacity: 0.5;
+}
+
+.upload-zone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-3);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.upload-icon {
+    margin-bottom: var(--s-2);
+    animation: fadeIn 300ms ease-out;
+    opacity: 0.8;
+}
+
+.upload-icon ::deep fluent-icon {
+    color: var(--accent-primary);
+}
+
+.upload-icon ::deep fluent-icon svg {
+    fill: var(--accent-primary);
+}
+
+.upload-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-0);
+    margin: 0;
+    animation: fadeIn 400ms ease-out;
+}
+
+.upload-description {
+    font-size: 0.9375rem;
+    color: var(--text-2);
+    margin: 0;
+    max-width: 400px;
+    animation: fadeIn 500ms ease-out;
+}
+
+.upload-button {
+    margin-top: var(--s-2);
+    animation: fadeIn 600ms ease-out;
+}
+
+.upload-button-label,
+.upload-zone-label {
+    cursor: pointer;
+    display: inline-block;
+}
+
+.selected-file-info {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    background-color: var(--bg-2);
+    border: 1px solid var(--border-0);
+    border-radius: var(--r-2);
+    margin-top: var(--s-2);
+    animation: slideIn 200ms ease-out;
+    width: 100%;
+    max-width: 500px;
+}
+
+.selected-file-info ::deep fluent-icon {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.selected-file-info span {
+    color: var(--text-0);
+    font-size: 0.9375rem;
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size {
+    color: var(--text-2);
+    font-size: 0.875rem;
+}
+
+.remove-file-button {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.upload-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--s-2);
+    padding-top: var(--s-2);
+    border-top: 1px solid var(--border-0);
+}
+
+.upload-submit-button {
+    min-width: 150px;
+}
+
+/* Documents Table Section */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--s-3);
+}
+
+.refresh-button {
+    flex-shrink: 0;
+}
+
+.documents-table-card {
+    padding: var(--s-4);
+    overflow-x: auto;
+}
+
+.documents-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.documents-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: transparent;
+}
+
+.documents-table thead {
+    background-color: var(--bg-1);
+    border-bottom: 2px solid var(--border-0);
+}
+
+.documents-table th {
+    padding: var(--s-3) var(--s-4);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.documents-table tbody tr {
+    border-bottom: 1px solid var(--border-0);
+    transition: background-color 150ms ease-out;
+    animation: slideIn 200ms ease-out;
+}
+
+.documents-table tbody tr:hover {
+    background-color: var(--bg-1);
+}
+
+.documents-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.documents-table td {
+    padding: var(--s-3) var(--s-4);
+    color: var(--text-0);
+    font-size: 0.9375rem;
+}
+
+.document-row {
+    animation: fadeIn 300ms ease-out;
+}
+
+.document-name-cell {
+    max-width: 300px;
+}
+
+.document-name-content {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    overflow: hidden;
+}
+
+.document-name-content ::deep fluent-icon {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.document-name-content span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-0);
+}
+
+.chunk-count,
+.indexed-time {
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+    color: var(--text-1);
+}
+
+.chunk-count ::deep fluent-icon,
+.indexed-time ::deep fluent-icon {
+    color: var(--text-2);
+    flex-shrink: 0;
+}
+
+/* Empty State */
+.empty-state-card {
+    padding: var(--s-5);
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--s-3);
+    max-width: 400px;
+}
+
+.empty-state-icon {
+    margin-bottom: var(--s-2);
+    animation: fadeIn 300ms ease-out;
+    opacity: 0.6;
+}
+
+.empty-state-icon ::deep fluent-icon {
+    color: var(--text-2);
+}
+
+.empty-state-icon ::deep fluent-icon svg {
+    fill: var(--text-2);
+}
+
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-0);
+    margin: 0;
+    animation: fadeIn 400ms ease-out;
+}
+
+.empty-state-text {
+    font-size: 1rem;
+    color: var(--text-2);
+    margin: 0;
+    line-height: 1.6;
+    animation: fadeIn 500ms ease-out;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .upload-zone {
+        padding: var(--s-3);
+    }
+
+    .upload-title {
+        font-size: 1.125rem;
+    }
+
+    .upload-description {
+        font-size: 0.875rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--s-2);
+    }
+
+    .documents-table-card {
+        padding: var(--s-2);
+    }
+}
