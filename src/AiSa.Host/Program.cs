@@ -105,6 +105,9 @@ builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 // Document ingestion
 builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
 
+// Retrieval service
+builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+
 // Vector store (Azure AI Search)
 builder.Services.Configure<AzureSearchOptions>(
     builder.Configuration.GetSection("AzureSearch"));

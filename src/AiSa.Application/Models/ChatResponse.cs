@@ -14,5 +14,10 @@ public class ChatResponse
     /// Correlation ID for tracing and observability.
     /// </summary>
     public required string CorrelationId { get; init; }
+
+    /// <summary>
+    /// Citations referencing document chunks used to generate the response.
+    /// </summary>
+    public IReadOnlyList<Citation> Citations { get; init; } = Array.Empty<Citation>();
 }
 
