@@ -105,6 +105,9 @@ builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 // Document ingestion
 builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
 
+// Document metadata store (in-memory for T02, upgrade to persistent store later)
+builder.Services.AddSingleton<IDocumentMetadataStore, InMemoryDocumentMetadataStore>();
+
 // Retrieval service
 builder.Services.AddScoped<IRetrievalService, RetrievalService>();
 
@@ -226,6 +229,7 @@ app.MapRazorComponents<App>()
 
 // API endpoints
 app.MapChatEndpoints();
+app.MapDocumentEndpoints();
 
 // Fake Login/Logout endpoints (for demo purposes)
 app.MapGet("/Account/Login", async (HttpContext context) =>
