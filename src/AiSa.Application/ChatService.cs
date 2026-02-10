@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using AiSa.Application.Models;
 using Microsoft.Extensions.Logging;
@@ -12,17 +14,23 @@ public class ChatService : IChatService
 {
     private readonly ILLMClient _llmClient;
     private readonly IRetrievalService _retrievalService;
+    private readonly ICacheService _cacheService;
+    private readonly ISecurityService _securityService;
     private readonly ActivitySource _activitySource;
     private readonly ILogger<ChatService> _logger;
 
     public ChatService(
         ILLMClient llmClient,
         IRetrievalService retrievalService,
+        ICacheService cacheService,
+        ISecurityService securityService,
         ActivitySource activitySource,
         ILogger<ChatService> logger)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         _retrievalService = retrievalService ?? throw new ArgumentNullException(nameof(retrievalService));
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+        _securityService = securityService ?? throw new ArgumentNullException(nameof(securityService));
         _activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -32,6 +40,14 @@ public class ChatService : IChatService
         // Input validation is handled at the API endpoint level (Program.cs) to return proper ProblemDetails.
         // This method assumes valid input and focuses on business logic.
 
+        // Validate and sanitize input
+        var validationResult = _securityService.ValidateInput(request.Message);
+        if (!validationResult.IsValid)
+        {
+            throw new ArgumentException(validationResult.RejectionReason ?? "Input validation failed", nameof(request));
+        }
+        var sanitizedMessage = validationResult.SanitizedInput ?? request.Message;
+
         // Retrieve correlation ID from Activity Baggage (automatically propagated from parent span in /api/chat)
         // This ensures all child spans (retrieval.query, llm.generate, etc.) see the same correlation ID
         // Correlation ID is managed by CorrelationIdMiddleware via HTTP header X-Correlation-ID
@@ -39,9 +55,46 @@ public class ChatService : IChatService
             ?? Activity.Current?.Id
             ?? Guid.NewGuid().ToString();
 
-        // Step 1: Retrieve relevant document chunks
+        // Step 1: Retrieve relevant document chunks (use sanitized message)
         const int topK = 3; // Number of chunks to retrieve
-        var searchResults = await _retrievalService.RetrieveAsync(request.Message, topK, cancellationToken);
+        IEnumerable<SearchResult> searchResults;
+        try
+        {
+            searchResults = await _retrievalService.RetrieveAsync(sanitizedMessage, topK, cancellationToken);
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("circuit", StringComparison.OrdinalIgnoreCase) || 
+                                              ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+        {
+            // Fallback when Azure AI Search is unavailable
+            _logger.LogWarning(
+                "Retrieval service unavailable (circuit breaker or timeout). Returning fallback response. CorrelationId: {CorrelationId}, Error: {ErrorType}",
+                correlationId,
+                ex.GetType().Name);
+            
+            return new ChatResponse
+            {
+                Response = "Document search is temporarily unavailable. Please try again later.",
+                CorrelationId = correlationId,
+                MessageId = Guid.NewGuid().ToString(),
+                Citations = Array.Empty<Citation>()
+            };
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            // Fallback when retrieval times out
+            _logger.LogWarning(
+                "Retrieval service timeout. Returning fallback response. CorrelationId: {CorrelationId}",
+                correlationId);
+            
+            return new ChatResponse
+            {
+                Response = "Document search is temporarily unavailable. Please try again later.",
+                CorrelationId = correlationId,
+                MessageId = Guid.NewGuid().ToString(),
+                Citations = Array.Empty<Citation>()
+            };
+        }
+        
         var resultsList = searchResults.ToList();
 
         // Step 2: Handle empty retrieval
@@ -55,12 +108,13 @@ public class ChatService : IChatService
             {
                 Response = "I don't know based on provided documents.",
                 CorrelationId = correlationId,
+                MessageId = Guid.NewGuid().ToString(),
                 Citations = Array.Empty<Citation>()
             };
         }
 
-        // Step 3: Build prompt with context and citations
-        var prompt = BuildPromptWithContext(request.Message, resultsList);
+        // Step 3: Build prompt with context and citations (use sanitized message)
+        var prompt = BuildPromptWithContext(sanitizedMessage, resultsList);
         var citations = resultsList.Select(r => new Citation
         {
             SourceName = r.Chunk.SourceName,
@@ -81,19 +135,65 @@ public class ChatService : IChatService
         activity?.SetTag("llm.prompt.length", prompt.Length);
         activity?.SetTag("llm.context.chunkCount", resultsList.Count);
 
-        var response = await _llmClient.GenerateAsync(prompt, cancellationToken);
-        var responseText = response ?? string.Empty;
-        var responseLength = responseText.Length;
+        string responseText;
+        try
+        {
+            var response = await _llmClient.GenerateAsync(prompt, cancellationToken);
+            responseText = response ?? string.Empty;
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("circuit", StringComparison.OrdinalIgnoreCase) || 
+                                              ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+        {
+            // Fallback when Azure OpenAI is unavailable
+            activity?.SetStatus(ActivityStatusCode.Error);
+            activity?.SetTag("error.type", "CircuitBreakerOrTimeout");
+            activity?.SetTag("fallback.used", true);
+            
+            _logger.LogWarning(
+                "LLM service unavailable (circuit breaker or timeout). Returning fallback response. CorrelationId: {CorrelationId}, Error: {ErrorType}",
+                correlationId,
+                ex.GetType().Name);
+            
+            return new ChatResponse
+            {
+                Response = "I'm temporarily unable to process requests. Please try again later.",
+                CorrelationId = correlationId,
+                MessageId = Guid.NewGuid().ToString(),
+                Citations = citations // Still return citations even if LLM failed
+            };
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            // Fallback when LLM times out
+            activity?.SetStatus(ActivityStatusCode.Error);
+            activity?.SetTag("error.type", "Timeout");
+            activity?.SetTag("fallback.used", true);
+            
+            _logger.LogWarning(
+                "LLM service timeout. Returning fallback response. CorrelationId: {CorrelationId}",
+                correlationId);
+            
+            return new ChatResponse
+            {
+                Response = "I'm temporarily unable to process requests. Please try again later.",
+                CorrelationId = correlationId,
+                MessageId = Guid.NewGuid().ToString(),
+                Citations = citations
+            };
+        }
 
+        var responseLength = responseText.Length;
         activity?.SetTag("llm.response.length", responseLength);
         activity?.SetStatus(ActivityStatusCode.Ok);
 
-        return new ChatResponse
-        {
-            Response = responseText,
-            CorrelationId = correlationId,
-            Citations = citations
-        };
+            var messageId = Guid.NewGuid().ToString();
+            return new ChatResponse
+            {
+                Response = responseText,
+                CorrelationId = correlationId,
+                MessageId = messageId,
+                Citations = citations
+            };
     }
 
     private static string BuildPromptWithContext(string userQuery, IEnumerable<SearchResult> searchResults)
@@ -124,5 +224,13 @@ public class ChatService : IChatService
         prompt.AppendLine("Answer based on the provided context. If the context doesn't contain enough information to answer the question, say 'I don't know based on provided documents.'");
 
         return prompt.ToString();
+    }
+
+    private static string GenerateCacheKey(string prompt)
+    {
+        // Generate SHA256 hash of prompt for cache key
+        using var sha256 = SHA256.Create();
+        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(prompt));
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 }

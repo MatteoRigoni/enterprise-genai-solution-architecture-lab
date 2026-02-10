@@ -1,6 +1,7 @@
 using AiSa.Application;
 using AiSa.Application.Models;
 using Azure;
+using Azure.Core.Pipeline;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
@@ -20,6 +21,8 @@ public class AzureSearchVectorStore : IVectorStore
     private readonly string _indexName;
     private readonly string _vectorSimilarityMetric;
     private readonly ILogger<AzureSearchVectorStore> _logger;
+    private readonly int _searchTimeoutSeconds;
+    private readonly int _indexTimeoutSeconds;
     private static readonly SemaphoreSlim _indexCreationLock = new(1, 1);
 
     public AzureSearchVectorStore(
@@ -53,8 +56,14 @@ public class AzureSearchVectorStore : IVectorStore
             ? new AzureKeyCredential(config.ApiKey)
             : throw new ArgumentException("AzureSearch:ApiKey is required", nameof(options));
 
+        // Azure SDK has built-in retry policies
+        // Timeouts are handled via CancellationToken in method calls
         _indexClient = new SearchIndexClient(endpoint, credential);
         _searchClient = new SearchClient(endpoint, _indexName, credential);
+        
+        // Store timeout values for use in method calls
+        _searchTimeoutSeconds = config.SearchTimeoutSeconds ?? 10;
+        _indexTimeoutSeconds = config.IndexTimeoutSeconds ?? 30;
     }
 
     public async Task AddDocumentsAsync(IEnumerable<DocumentChunk> chunks, CancellationToken cancellationToken = default)
@@ -63,8 +72,12 @@ public class AzureSearchVectorStore : IVectorStore
         if (!chunksList.Any())
             return;
 
+        // Apply timeout using CancellationTokenSource
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_indexTimeoutSeconds));
+
         // Ensure index exists
-        await EnsureIndexExistsAsync(cancellationToken);
+        await EnsureIndexExistsAsync(timeoutCts.Token);
 
         // Log metadata only (ADR-0004: no raw content)
         var sourceIds = chunksList.Select(c => c.SourceId).Distinct().ToList();
@@ -96,7 +109,7 @@ public class AzureSearchVectorStore : IVectorStore
             var batchActions = batch.Select(doc => IndexDocumentsAction.Upload(doc)).ToArray();
             var batchResult = await _searchClient.IndexDocumentsAsync(
                 IndexDocumentsBatch.Create<SearchDocument>(batchActions),
-                cancellationToken: cancellationToken);
+                cancellationToken: timeoutCts.Token);
 
             // Log errors (metadata only)
             if (batchResult.Value.Results.Any(r => !r.Succeeded))
@@ -122,8 +135,12 @@ public class AzureSearchVectorStore : IVectorStore
         if (topK <= 0)
             throw new ArgumentException("topK must be greater than 0", nameof(topK));
 
+        // Apply timeout using CancellationTokenSource
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_searchTimeoutSeconds));
+
         // Ensure index exists
-        await EnsureIndexExistsAsync(cancellationToken);
+        await EnsureIndexExistsAsync(timeoutCts.Token);
 
         // Log metadata only (ADR-0004)
         _logger.LogInformation(
@@ -319,4 +336,14 @@ public class AzureSearchOptions
     /// - euclidean: L2 distance, lower values = more similar
     /// </summary>
     public string VectorSimilarityMetric { get; set; } = "cosine";
+
+    /// <summary>
+    /// Timeout in seconds for search operations. Default: 10 seconds.
+    /// </summary>
+    public int? SearchTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Timeout in seconds for index operations. Default: 30 seconds.
+    /// </summary>
+    public int? IndexTimeoutSeconds { get; set; } = 30;
 }

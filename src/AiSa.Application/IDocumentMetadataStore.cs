@@ -26,4 +26,18 @@ public interface IDocumentMetadataStore
     /// <param name="documentId">Document identifier.</param>
     /// <returns>Document metadata if found, null otherwise.</returns>
     Task<DocumentMetadata?> GetByIdAsync(string documentId);
+
+    /// <summary>
+    /// Get the latest version of a document by source name.
+    /// </summary>
+    /// <param name="sourceName">Source document name.</param>
+    /// <returns>Latest version document metadata if found, null otherwise.</returns>
+    Task<DocumentMetadata?> GetLatestBySourceNameAsync(string sourceName);
+
+    /// <summary>
+    /// Mark a document version as deprecated.
+    /// </summary>
+    /// <param name="documentId">Document identifier to deprecate.</param>
+    /// <returns>Task representing the async operation.</returns>
+    Task DeprecateVersionAsync(string documentId);
 }

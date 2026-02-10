@@ -260,6 +260,10 @@
     flex-shrink: 0;
 }
 
+.status-cell ::deep fluent-badge {
+    padding: 2px;
+}
+
 /* Empty State */
 .empty-state-card {
     padding: var(--s-5);

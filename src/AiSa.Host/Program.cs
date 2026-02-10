@@ -9,6 +9,8 @@ using AiSa.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using Microsoft.FluentUI.AspNetCore.Components;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -78,7 +80,67 @@ builder.Services.AddScoped<HttpClient>(sp =>
 });
 
 // App services
-builder.Services.AddScoped<ILLMClient, MockLLMClient>();
+// Use Azure OpenAI LLM client if configured, otherwise fall back to mock for development
+var azureOpenAIConfig = builder.Configuration.GetSection("AzureOpenAI").Get<AzureOpenAIOptions>();
+if (azureOpenAIConfig != null && 
+    !string.IsNullOrWhiteSpace(azureOpenAIConfig.Endpoint) && 
+    !string.IsNullOrWhiteSpace(azureOpenAIConfig.LLMDeploymentName) &&
+    !string.IsNullOrWhiteSpace(azureOpenAIConfig.ApiKey))
+{
+    // Configure LLM HttpClient with resilience
+    builder.Services.AddHttpClient("AzureOpenAI-LLM", client =>
+    {
+        // Base configuration will be set in AzureOpenAILLMClient
+    })
+    .AddStandardResilienceHandler(options =>
+    {
+        // Configure retry with exponential backoff
+        var retryConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:Retry");
+        options.Retry.MaxRetryAttempts = retryConfig.GetValue<int>("MaxRetryAttempts", 3);
+        options.Retry.BackoffType = DelayBackoffType.Exponential;
+        options.Retry.Delay = TimeSpan.FromSeconds(retryConfig.GetValue<double>("BaseDelaySeconds", 1.0));
+        
+        // Configure timeout
+        var timeoutConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:Timeout");
+        options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(timeoutConfig.GetValue<int>("LLMSeconds", 60));
+        
+        // Configure circuit breaker
+        var circuitBreakerConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:CircuitBreaker");
+        // FailureRatio: 0.5 means 50% failure rate triggers circuit breaker
+        // With FailureThreshold=5 and MinimumThroughput=2, we want ~50% failure rate
+        options.CircuitBreaker.FailureRatio = 0.5;
+        options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(circuitBreakerConfig.GetValue<int>("SamplingDurationSeconds", 30));
+        options.CircuitBreaker.MinimumThroughput = circuitBreakerConfig.GetValue<int>("MinimumThroughput", 2);
+        options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(circuitBreakerConfig.GetValue<int>("BreakDurationSeconds", 60));
+    });
+    
+    builder.Services.AddScoped<ILLMClient, AzureOpenAILLMClient>();
+}
+else
+{
+    builder.Services.AddScoped<ILLMClient, MockLLMClient>();
+}
+// Cache service
+builder.Services.Configure<CacheOptions>(
+    builder.Configuration.GetSection("Performance:Cache"));
+builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
+
+// Streaming configuration
+builder.Services.Configure<StreamingOptions>(
+    builder.Configuration.GetSection("Performance:Streaming"));
+
+// Security service
+builder.Services.Configure<SecurityOptions>(
+    builder.Configuration.GetSection("Security"));
+builder.Services.AddSingleton<ISecurityService, SecurityService>();
+
+// Rate limiting
+builder.Services.Configure<RateLimitingOptions>(
+    builder.Configuration.GetSection("Security:RateLimiting"));
+
+// Feedback service
+builder.Services.AddSingleton<IFeedbackService, InMemoryFeedbackService>();
+
 builder.Services.AddScoped<IChatService, ChatService>();
 
 // Document chunking - register token counter based on mode
@@ -96,8 +158,32 @@ builder.Services.Configure<ChunkingOptions>(
     builder.Configuration.GetSection("Chunking"));
 builder.Services.AddScoped<IDocumentChunker, DocumentChunker>();
 
-// Embedding service (Azure OpenAI)
-builder.Services.AddHttpClient(); // For AzureOpenAIEmbeddingService
+// Embedding service (Azure OpenAI) - Configure with resilience
+builder.Services.AddHttpClient("AzureOpenAI", client =>
+{
+    // Base configuration will be set in AzureOpenAIEmbeddingService
+})
+.AddStandardResilienceHandler(options =>
+{
+    // Configure retry with exponential backoff
+    var retryConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:Retry");
+    options.Retry.MaxRetryAttempts = retryConfig.GetValue<int>("MaxRetryAttempts", 3);
+    options.Retry.BackoffType = DelayBackoffType.Exponential;
+    options.Retry.Delay = TimeSpan.FromSeconds(retryConfig.GetValue<double>("BaseDelaySeconds", 1.0));
+    
+    // Configure timeout
+    var timeoutConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:Timeout");
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(timeoutConfig.GetValue<int>("EmbeddingSeconds", 30));
+    
+    // Configure circuit breaker
+    var circuitBreakerConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:CircuitBreaker");
+    // FailureRatio: 0.5 means 50% failure rate triggers circuit breaker
+    options.CircuitBreaker.FailureRatio = 0.5;
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(circuitBreakerConfig.GetValue<int>("SamplingDurationSeconds", 30));
+    options.CircuitBreaker.MinimumThroughput = circuitBreakerConfig.GetValue<int>("MinimumThroughput", 2);
+    options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(circuitBreakerConfig.GetValue<int>("BreakDurationSeconds", 60));
+});
+
 builder.Services.Configure<AzureOpenAIOptions>(
     builder.Configuration.GetSection("AzureOpenAI"));
 builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
@@ -173,8 +259,30 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "AiSa API",
         Version = "v1",
-        Description = "Enterprise GenAI Solution Architecture Lab - API Documentation"
+        Description = "Enterprise GenAI Solution Architecture Lab - API Documentation\n\n" +
+                      "This API provides RAG (Retrieval-Augmented Generation) capabilities with document ingestion and chat endpoints.\n\n" +
+                      "**Features:**\n" +
+                      "- Chat with AI assistant using RAG\n" +
+                      "- Upload and ingest documents for knowledge base\n" +
+                      "- Retrieve document citations in responses\n\n" +
+                      "**Authentication:** Cookie-based (demo mode)\n\n" +
+                      "**Rate Limiting:** 10 requests/minute for chat, 5 requests/minute for document uploads",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "AiSa Team"
+        }
     });
+
+    // Include XML comments for better documentation
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+
+    // Add example schemas
+    options.SchemaFilter<AiSa.Host.Swagger.ExampleSchemaFilter>();
 });
 
 var app = builder.Build();
@@ -198,6 +306,12 @@ app.UseWhen(
     {
         // Correlation ID middleware: ensures traceability across logs and distributed systems
         api.UseMiddleware<CorrelationIdMiddleware>();
+
+        // Rate limiting middleware: prevents abuse
+        api.UseMiddleware<RateLimitingMiddleware>();
+
+        // User telemetry enrichment (no PII): adds enduser.* tags and log scope when authenticated
+        api.UseMiddleware<UserTelemetryMiddleware>();
 
         // API call tracking middleware: records metadata for UI sessions
         api.UseMiddleware<ApiCallTrackingMiddleware>();
@@ -230,12 +344,15 @@ app.MapRazorComponents<App>()
 // API endpoints
 app.MapChatEndpoints();
 app.MapDocumentEndpoints();
+app.MapFeedbackEndpoints();
 
 // Fake Login/Logout endpoints (for demo purposes)
 app.MapGet("/Account/Login", async (HttpContext context) =>
 {
     var claims = new List<Claim>
     {
+        // Stable non-PII identifier for telemetry correlation (hashed before export)
+        new("sub", "demo-user-001"),
         new(ClaimTypes.Name, "Utente Demo"),
         new(ClaimTypes.Email, "utente.demo@aisa.com"),
         new("name", "Utente Demo")

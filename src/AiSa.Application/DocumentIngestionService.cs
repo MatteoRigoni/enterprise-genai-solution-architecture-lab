@@ -14,6 +14,7 @@ public class DocumentIngestionService : IDocumentIngestionService
     private readonly IDocumentChunker _chunker;
     private readonly IEmbeddingService _embeddingService;
     private readonly IVectorStore _vectorStore;
+    private readonly IDocumentMetadataStore? _metadataStore;
     private readonly ActivitySource _activitySource;
     private readonly ILogger<DocumentIngestionService> _logger;
 
@@ -23,10 +24,22 @@ public class DocumentIngestionService : IDocumentIngestionService
         IVectorStore vectorStore,
         ActivitySource activitySource,
         ILogger<DocumentIngestionService> logger)
+        : this(chunker, embeddingService, vectorStore, null, activitySource, logger)
+    {
+    }
+
+    public DocumentIngestionService(
+        IDocumentChunker chunker,
+        IEmbeddingService embeddingService,
+        IVectorStore vectorStore,
+        IDocumentMetadataStore? metadataStore,
+        ActivitySource activitySource,
+        ILogger<DocumentIngestionService> logger)
     {
         _chunker = chunker ?? throw new ArgumentNullException(nameof(chunker));
         _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
         _vectorStore = vectorStore ?? throw new ArgumentNullException(nameof(vectorStore));
+        _metadataStore = metadataStore;
         _activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -35,6 +48,16 @@ public class DocumentIngestionService : IDocumentIngestionService
         Stream stream,
         string sourceId,
         string sourceName,
+        CancellationToken cancellationToken = default)
+    {
+        return await IngestAsync(stream, sourceId, sourceName, updateExisting: false, cancellationToken);
+    }
+
+    public async Task<IngestionResult> IngestAsync(
+        Stream stream,
+        string sourceId,
+        string sourceName,
+        bool updateExisting,
         CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
@@ -48,9 +71,23 @@ public class DocumentIngestionService : IDocumentIngestionService
         {
             // Log metadata only (ADR-0004)
             _logger.LogInformation(
-                "Starting document ingestion. SourceId: {SourceId}, SourceName: {SourceName}",
+                "Starting document ingestion. SourceId: {SourceId}, SourceName: {SourceName}, UpdateExisting: {UpdateExisting}",
                 sourceId,
-                sourceName);
+                sourceName,
+                updateExisting);
+
+            // If updating existing, check for previous version
+            if (updateExisting && _metadataStore != null)
+            {
+                var existingLatest = await _metadataStore.GetLatestBySourceNameAsync(sourceName);
+                if (existingLatest != null)
+                {
+                    _logger.LogInformation(
+                        "Updating existing document. PreviousVersionId: {PreviousVersionId}, PreviousVersion: {PreviousVersion}",
+                        existingLatest.DocumentId,
+                        existingLatest.Version);
+                }
+            }
 
             // Step 1: Parse file content (plain text for now)
             string content;

@@ -1,5 +1,6 @@
 using AiSa.Application.Models;
 using System.Diagnostics;
+using System.Net.Http;
 using Microsoft.Extensions.Logging;
 
 namespace AiSa.Application;
@@ -50,7 +51,38 @@ public class RetrievalService : IRetrievalService
                 topK);
 
             // Step 1: Generate embedding for query
-            var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(query, cancellationToken);
+            float[] queryEmbedding;
+            try
+            {
+                queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(query, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("circuit", StringComparison.OrdinalIgnoreCase) || 
+                                                   ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+            {
+                // Fallback when embedding service is unavailable
+                activity?.SetStatus(ActivityStatusCode.Error);
+                activity?.SetTag("error.type", "EmbeddingServiceUnavailable");
+                activity?.SetTag("fallback.used", true);
+                
+                _logger.LogWarning(
+                    "Embedding service unavailable (circuit breaker or timeout). Returning empty results. QueryLength: {QueryLength}",
+                    query.Length);
+                
+                return Enumerable.Empty<SearchResult>();
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                // Fallback when embedding times out
+                activity?.SetStatus(ActivityStatusCode.Error);
+                activity?.SetTag("error.type", "EmbeddingTimeout");
+                activity?.SetTag("fallback.used", true);
+                
+                _logger.LogWarning(
+                    "Embedding service timeout. Returning empty results. QueryLength: {QueryLength}",
+                    query.Length);
+                
+                return Enumerable.Empty<SearchResult>();
+            }
 
             // Step 2: Search vector store
             var results = await _vectorStore.SearchAsync(queryEmbedding, topK, cancellationToken);

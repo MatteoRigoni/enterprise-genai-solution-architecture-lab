@@ -36,7 +36,7 @@ public class AzureOpenAIEmbeddingService : IEmbeddingService
             ? config.ApiKey
             : throw new ArgumentException("AzureOpenAI:ApiKey is required", nameof(options));
 
-        _httpClient = httpClientFactory.CreateClient();
+        _httpClient = httpClientFactory.CreateClient("AzureOpenAI");
         _httpClient.BaseAddress = new Uri(config.Endpoint);
         _httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
     }
@@ -112,6 +112,11 @@ public class AzureOpenAIOptions
     /// Deployment name for embeddings model (e.g., text-embedding-ada-002).
     /// </summary>
     public string DeploymentName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Deployment name for LLM model (e.g., gpt-4, gpt-35-turbo).
+    /// </summary>
+    public string LLMDeploymentName { get; set; } = string.Empty;
 
     /// <summary>
     /// API key for authentication (or use managed identity later).

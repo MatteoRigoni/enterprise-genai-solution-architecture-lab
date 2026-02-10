@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
 namespace AiSa.Host.Components.Pages;
 
@@ -15,6 +16,7 @@ public partial class Documents
     private bool isDragOver = false;
     private bool isUploading = false;
     private bool isRefreshing = false;
+    private bool isTriggeringFileInput = false;
     private IBrowserFile? selectedFile = null;
     private List<DocumentItem>? documents = null;
 
@@ -29,6 +31,9 @@ public partial class Documents
 
     [Inject]
     private ILogger<Documents> Logger { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -61,11 +66,26 @@ public partial class Documents
         StateHasChanged();
     }
 
-    private void TriggerFileInput()
+    private async Task TriggerFileInput()
     {
-        // File input will be triggered via JavaScript interop if needed
-        // For now, clicking the button or upload zone will trigger the file dialog
-        // The actual file input click is handled by the browser when the input is focused
+        if (isTriggeringFileInput)
+            return;
+
+        isTriggeringFileInput = true;
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('file-input')?.click()");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error triggering file input");
+        }
+        finally
+        {
+            // Reset after a short delay to allow the file dialog to open
+            await Task.Delay(100);
+            isTriggeringFileInput = false;
+        }
     }
 
 

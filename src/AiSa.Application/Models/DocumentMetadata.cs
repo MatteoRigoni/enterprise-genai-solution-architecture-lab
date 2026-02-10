@@ -29,4 +29,19 @@ public class DocumentMetadata
     /// Ingestion status.
     /// </summary>
     public required IngestionStatus Status { get; init; }
+
+    /// <summary>
+    /// Document version number (starts at 1, increments for updates).
+    /// </summary>
+    public int Version { get; init; } = 1;
+
+    /// <summary>
+    /// Previous version document ID if this is an update.
+    /// </summary>
+    public string? PreviousVersionId { get; init; }
+
+    /// <summary>
+    /// Whether this version is deprecated (superseded by a newer version).
+    /// </summary>
+    public bool IsDeprecated { get; init; } = false;
 }

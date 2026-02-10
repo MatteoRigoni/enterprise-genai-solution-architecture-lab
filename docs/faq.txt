@@ -1,0 +1,40 @@
+1) What is AcmeCloud?
+
+AcmeCloud is a cloud storage service that lets users upload, organize, and share files securely across devices.
+
+2) How do I reset my password?
+
+Go to Settings → Security → Reset Password.
+You will receive an email with a reset link valid for 15 minutes.
+
+3) What file types are supported?
+
+AcmeCloud supports common formats such as PDF, DOCX, JPG, PNG, MP4, and ZIP.
+Executable files (like .exe) are blocked.
+
+4) What is the storage limit on the free plan?
+
+The free plan includes 5 GB of total storage.
+
+5) Can I share files with external users?
+
+Yes. You can create a share link and choose one of these permissions:
+
+View only
+
+Comment
+
+Edit
+
+6) How long are deleted files kept?
+
+Deleted files remain in the Trash for 30 days, then are permanently removed.
+
+7) Does AcmeCloud offer refunds?
+
+Monthly subscriptions are non-refundable.
+Yearly subscriptions can be refunded within 14 days of purchase if usage is under 1 GB.
+
+8) How do I contact support?
+
+Support is available Monday–Friday, 9:00–18:00 UTC via in-app chat and email.
