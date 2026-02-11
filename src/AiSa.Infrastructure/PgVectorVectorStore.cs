@@ -180,6 +180,11 @@ public class PgVectorVectorStore : IVectorStore
 
     private string GetConnectionString(IConfiguration configuration)
     {
+        // When running under Aspire AppHost, connection is injected as ConnectionStrings:pgvector
+        var aspireConnectionString = configuration["ConnectionStrings:pgvector"];
+        if (!string.IsNullOrWhiteSpace(aspireConnectionString))
+            return aspireConnectionString;
+
         if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
         {
             var pwd = configuration["PgVector:Password"] ?? Environment.GetEnvironmentVariable("PgVector__Password");
