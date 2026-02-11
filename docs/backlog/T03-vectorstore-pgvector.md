@@ -6,7 +6,7 @@ Support a second vector store (pgvector) and allow switching via config; include
 ## Scope
 - Implement PgVectorVectorStore using PostgreSQL + pgvector.
 - Add config setting: VectorStore:Provider = "AzureSearch" | "PgVector"
-- Provide local docker compose for Postgres+pgvector.
+- Provide local Postgres+pgvector via .NET Aspire (existing AppHost).
 - Add Admin page section: show which provider is active.
 
 ## Acceptance Criteria
@@ -19,16 +19,16 @@ Support a second vector store (pgvector) and allow switching via config; include
 - src/AiSa.Infrastructure: PgVectorVectorStore
 - src/AiSa.Host: config + Admin page
 - docs/adr: new ADR
-- docker-compose.yml at repo root
+- src/AiSa.AppHost: Postgres+pgvector container and connection to Host
 
 ## DoD
 - Provider toggle tested
 - README updated: how to run pgvector locally
-- No secrets in compose
+- No secrets in config (Aspire handles credentials)
 
 ## Demo
-1) Run docker compose
-2) Set provider=PgVector
+1) Run via AppHost (e.g. `dotnet run --project src/AiSa.AppHost`)
+2) Set provider=PgVector and use Aspire-provided Postgres connection
 3) Upload doc -> chat -> citations still work
 
 ## Sources (passive)

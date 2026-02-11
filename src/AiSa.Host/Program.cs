@@ -81,6 +81,77 @@ builder.Services.AddScoped<HttpClient>(sp =>
 builder.Services.AddScoped<ILLMClient, MockLLMClient>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// Document chunking - register token counter based on mode
+var chunkingOptions = builder.Configuration.GetSection("Chunking").Get<ChunkingOptions>();
+if (chunkingOptions?.Mode == ChunkingMode.Advanced)
+{
+    builder.Services.AddSingleton<ITokenCounter, SharpTokenCounter>();
+}
+else
+{
+    builder.Services.AddSingleton<ITokenCounter, BasicTokenCounter>();
+}
+
+builder.Services.Configure<ChunkingOptions>(
+    builder.Configuration.GetSection("Chunking"));
+builder.Services.AddScoped<IDocumentChunker, DocumentChunker>();
+
+// Embedding service (Azure OpenAI) - Configure with resilience
+builder.Services.AddHttpClient("AzureOpenAI", client =>
+{
+    // Base configuration will be set in AzureOpenAIEmbeddingService
+})
+.AddStandardResilienceHandler(options =>
+{
+    // Configure retry with exponential backoff
+    var retryConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:Retry");
+    options.Retry.MaxRetryAttempts = retryConfig.GetValue<int>("MaxRetryAttempts", 3);
+    options.Retry.BackoffType = DelayBackoffType.Exponential;
+    options.Retry.Delay = TimeSpan.FromSeconds(retryConfig.GetValue<double>("BaseDelaySeconds", 1.0));
+    
+    // Configure timeout
+    var timeoutConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:Timeout");
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(timeoutConfig.GetValue<int>("EmbeddingSeconds", 30));
+    
+    // Configure circuit breaker
+    var circuitBreakerConfig = builder.Configuration.GetSection("Resilience:AzureOpenAI:CircuitBreaker");
+    // FailureRatio: 0.5 means 50% failure rate triggers circuit breaker
+    options.CircuitBreaker.FailureRatio = 0.5;
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(circuitBreakerConfig.GetValue<int>("SamplingDurationSeconds", 30));
+    options.CircuitBreaker.MinimumThroughput = circuitBreakerConfig.GetValue<int>("MinimumThroughput", 2);
+    options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(circuitBreakerConfig.GetValue<int>("BreakDurationSeconds", 60));
+});
+
+builder.Services.Configure<AzureOpenAIOptions>(
+    builder.Configuration.GetSection("AzureOpenAI"));
+builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
+
+// Document ingestion
+builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
+
+// Document metadata store (in-memory for T02, upgrade to persistent store later)
+builder.Services.AddSingleton<IDocumentMetadataStore, InMemoryDocumentMetadataStore>();
+
+// Retrieval service
+builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+
+// Vector store: provider toggle (ADR-0003)
+var vectorStoreSection = builder.Configuration.GetSection("VectorStore");
+builder.Services.Configure<VectorStoreOptions>(vectorStoreSection);
+builder.Services.Configure<PgVectorOptions>(vectorStoreSection.GetSection("PgVector"));
+
+var vectorStoreProvider = vectorStoreSection.GetValue<string>("Provider") ?? "AzureSearch";
+if (string.Equals(vectorStoreProvider, "PgVector", StringComparison.OrdinalIgnoreCase))
+{
+    // PgVectorVectorStore is registered in T03.B; until then fail fast with clear message
+    throw new InvalidOperationException(
+        "VectorStore:Provider 'PgVector' is not implemented yet. Set VectorStore:Provider to 'AzureSearch' or complete T03.B.");
+}
+
+builder.Services.Configure<AzureSearchOptions>(
+    builder.Configuration.GetSection("AzureSearch"));
+builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));
 
