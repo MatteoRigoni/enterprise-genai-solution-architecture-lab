@@ -18,9 +18,9 @@
     align-items: center;
     gap: var(--spacing-vertical-m, 1rem);
     padding: var(--spacing-vertical-l, 1.5rem);
-    background-color: var(--fill-color, rgba(255, 255, 255, 0.95));
+    background-color: transparent;
     border-radius: var(--control-corner-radius, 8px);
-    box-shadow: var(--shadow-card-rest, 0 2px 8px rgba(0, 0, 0, 0.15));
+    box-shadow: none;
 }
 
 .loading-message {
@@ -33,7 +33,7 @@
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
     .loading-overlay-content {
-        background-color: var(--fill-color, rgba(32, 32, 32, 0.95));
+        background-color: transparent;
     }
 
     .loading-message {

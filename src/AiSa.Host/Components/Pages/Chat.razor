@@ -18,7 +18,7 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
                 </FluentButton>
             </div>
-            <p class="text-body">Chat with the AI assistant to get answers, insights, and assistance powered by enterprise GenAI capabilities.</p>
+            <p class="text-body">Chat with the AI assistant to get answers, insights, and assistance powered by enterprise GenAI capabilities. Answers are based on documents you've uploaded.</p>
     </div>
     }
 
@@ -61,6 +61,23 @@
                                 {
                                     <div class="message-correlation-id">ID: @message.CorrelationId</div>
                                 }
+                                @if (message.Role == "Assistant" && !string.IsNullOrEmpty(message.MessageId))
+                                {
+                                    <div class="message-feedback">
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                     OnClick="@(() => HandleFeedback(message.MessageId, "positive"))"
+                                                     Title="Thumbs up"
+                                                     class="@($"feedback-button{(message.FeedbackRating == "positive" ? " feedback-active" : "")}")">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.ThumbLike())" />
+                                        </FluentButton>
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                     OnClick="@(() => HandleFeedback(message.MessageId, "negative"))"
+                                                     Title="Thumbs down"
+                                                     class="@($"feedback-button{(message.FeedbackRating == "negative" ? " feedback-active" : "")}")">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.ThumbDislike())" />
+                                        </FluentButton>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -78,11 +95,12 @@
 
             <div class="chat-input-container">
             <div class="chat-input-area">
-                <FluentTextField @bind-Value="currentMessage"
+                <FluentTextField Value="@currentMessage"
                                  Placeholder="Type your message..." 
                                  class="chat-input"
                                  disabled="@isSending"
                                  @onkeydown="HandleKeyDown"
+                                 @oninput="HandleInput"
                                  IconStart="@(new Icons.Regular.Size16.Edit())">
                 </FluentTextField>
                 <FluentButton Appearance="Appearance.Accent" 

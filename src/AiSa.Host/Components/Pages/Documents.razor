@@ -1,6 +1,9 @@
 @page "/documents"
+@rendermode InteractiveServer
 @using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using AiSa.Host.Components.Dashboard
 
 <PageTitle>Documents</PageTitle>
 
@@ -17,17 +20,186 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
                 </FluentButton>
             </div>
-            <p class="text-body">Coming soon - Document management and ingestion interface will be implemented here.</p>
+            <p class="text-body">Upload and manage documents for the knowledge base. Documents are automatically chunked, embedded, and indexed for retrieval-augmented generation (RAG).</p>
         </div>
     }
+
+    <!-- Statistics Section -->
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Overview</h2>
+        <div class="dashboard-grid">
+            <StatCard Label="Total Documents"
+                     Value="@totalDocuments.ToString()">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Document())" />
+                </Icon>
+            </StatCard>
+            <StatCard Label="Total Chunks"
+                     Value="@totalChunks.ToString()">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" />
+                </Icon>
+            </StatCard>
+            <StatCard Label="Completed"
+                     Value="@completedDocuments.ToString()"
+                     BadgeType="success">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.CheckmarkCircle())" />
+                </Icon>
+            </StatCard>
+            <StatCard Label="Failed"
+                     Value="@failedDocuments.ToString()"
+                     BadgeType="@(failedDocuments > 0 ? "error" : "info")">
+                <Icon>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Alert())" />
+                </Icon>
+            </StatCard>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Upload Document</h2>
+        <div class="surface-card upload-section">
+            <div class="upload-zone @(isDragOver ? "drag-over" : "")"
+                 @ondrop="HandleDrop"
+                 @ondragover="HandleDragOver"
+                 @ondragleave="HandleDragLeave"
+                 @ondragenter:preventDefault="true"
+                 @ondragover:preventDefault="true">
+                <div class="upload-zone-content">
+                    <div class="upload-icon">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.DocumentAdd())" />
+                    </div>
+                    <h3 class="upload-title">Drag & Drop or Click to Upload</h3>
+                    <p class="upload-description">Upload a text file (.txt) to add it to the knowledge base</p>
+                    <FluentButton Appearance="Appearance.Accent"
+                                 IconStart="@(new Icons.Regular.Size16.ArrowUpload())"
+                                 OnClick="TriggerFileInput"
+                                 class="upload-button">
+                        Choose File
+                    </FluentButton>
+                    <InputFile id="file-input"
+                               accept=".txt,text/plain"
+                               OnChange="HandleFileSelected"
+                               style="display: none;" />
+                    @if (selectedFile != null)
+                    {
+                        <div class="selected-file-info">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Document())" />
+                            <span>@selectedFile.Name</span>
+                            <span class="file-size">(@FormatFileSize(selectedFile.Size))</span>
+                            <FluentButton Appearance="Appearance.Stealth"
+                                       OnClick="ClearSelectedFile"
+                                       IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                                       Title="Remove"
+                                       class="remove-file-button">
+                            </FluentButton>
+                        </div>
+                    }
+                </div>
+            </div>
+            @if (selectedFile != null)
+            {
+                <div class="upload-actions">
+                    <FluentButton Appearance="Appearance.Accent"
+                                 OnClick="HandleUpload"
+                                 disabled="@isUploading"
+                                 IconStart="@(new Icons.Regular.Size16.ArrowUpload())"
+                                 class="upload-submit-button">
+                        @if (isUploading)
+                        {
+                            <span style="margin-left: var(--s-2);">Uploading...</span>
+                        }
+                        else
+                        {
+                            <span>Upload & Ingest</span>
+                        }
+                    </FluentButton>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Documents List Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2 class="text-section">Documents</h2>
+            <FluentButton Appearance="Appearance.Accent"
+                         OnClick="RefreshDocuments"
+                         disabled="@isRefreshing"
+                         IconStart="@(new Icons.Regular.Size16.ArrowSync())"
+                         Title="Refresh"
+                         class="refresh-button">
+                @if (isRefreshing)
+                {
+                    <FluentProgressRing Size="Size.Small" />
+                }
+                else
+                {
+                    <span>Refresh</span>
+                }
+            </FluentButton>
+        </div>
+
+        @if (documents == null || !documents.Any())
+        {
+            <div class="surface-card empty-state-card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Document())" />
+                    </div>
+                    <h3 class="empty-state-title">No documents yet</h3>
+                    <p class="empty-state-text">Upload your first document to start building the knowledge base.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="surface-card documents-table-card">
+                <div class="documents-table-container">
+                    <table class="documents-table">
+                        <thead>
+                            <tr>
+                                <th>Document Name</th>
+                                <th>Status</th>
+                                <th>Chunks</th>
+                                <th>Indexed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in documents.OrderByDescending(d => d.indexedAt))
+                            {
+                                <tr class="document-row">
+                                    <td class="document-name-cell">
+                                        <div class="document-name-content">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Document())" />
+                                            <span>@doc.sourceName</span>
+                                        </div>
+                                    </td>
+                                    <td class="status-cell">
+                                        <FluentBadge Appearance="@GetStatusAppearance(doc.status)">
+                                            @GetStatusText(doc.status)
+                                        </FluentBadge>
+                                    </td>
+                                    <td>
+                                        <div class="chunk-count">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.DocumentMultiple())" />
+                                            <span>@doc.chunkCount</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="indexed-time">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Clock())" />
+                                            <span>@FormatRelativeTime(doc.indexedAt)</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
 </div>
-
-@code {
-    private bool heroDismissed = false;
-
-    private void DismissHero()
-    {
-        heroDismissed = true;
-    }
-}
-

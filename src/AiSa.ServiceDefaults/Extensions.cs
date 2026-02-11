@@ -112,6 +112,27 @@ public static class Extensions
                         // CRITICAL: Do not capture request/response bodies
                         options.EnrichWithHttpRequestMessage = (activity, request) =>
                         {
+                            // Set a more meaningful display name for the span
+                            if (request.RequestUri != null)
+                            {
+                                var path = request.RequestUri.AbsolutePath;
+                                if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    // Use API path as part of the span name for better traceability
+                                    activity.DisplayName = $"{request.Method} {path}";
+                                }
+                            }
+                            
+                            // Add useful tags for searchability
+                            if (request.RequestUri != null)
+                            {
+                                activity.SetTag("http.client.request.path", request.RequestUri.AbsolutePath);
+                            }
+                            if (request.Method != null)
+                            {
+                                activity.SetTag("http.client.request.method", request.Method.ToString());
+                            }
+                            
                             // Only safe metadata: method, URI (without query params if sensitive)
                             // NO body content
                         };
