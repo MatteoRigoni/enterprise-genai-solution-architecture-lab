@@ -143,14 +143,14 @@ builder.Services.Configure<PgVectorOptions>(vectorStoreSection.GetSection("PgVec
 var vectorStoreProvider = vectorStoreSection.GetValue<string>("Provider") ?? "AzureSearch";
 if (string.Equals(vectorStoreProvider, "PgVector", StringComparison.OrdinalIgnoreCase))
 {
-    // PgVectorVectorStore is registered in T03.B; until then fail fast with clear message
-    throw new InvalidOperationException(
-        "VectorStore:Provider 'PgVector' is not implemented yet. Set VectorStore:Provider to 'AzureSearch' or complete T03.B.");
+    builder.Services.AddSingleton<IVectorStore, PgVectorVectorStore>();
 }
-
-builder.Services.Configure<AzureSearchOptions>(
-    builder.Configuration.GetSection("AzureSearch"));
-builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+else
+{
+    builder.Services.Configure<AzureSearchOptions>(
+        builder.Configuration.GetSection("AzureSearch"));
+    builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+}
 
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));
