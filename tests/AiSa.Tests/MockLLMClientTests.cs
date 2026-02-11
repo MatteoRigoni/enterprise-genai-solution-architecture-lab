@@ -17,7 +17,7 @@ public class MockLLMClientTests
         // Assert
         Assert.NotNull(result);
         Assert.Contains("MOCK: hello", result, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal("MOCK: hello! This is a deterministic mock response for testing purposes.", result);
+        Assert.Equal("MOCK: Hello! This is a deterministic mock response for testing purposes.", result);
     }
 
     [Fact]
@@ -32,9 +32,9 @@ public class MockLLMClientTests
         var result3 = await client.GenerateAsync("  hello  ");
 
         // Assert
-        Assert.Equal("MOCK: hello! This is a deterministic mock response for testing purposes.", result1);
-        Assert.Equal("MOCK: hello! This is a deterministic mock response for testing purposes.", result2);
-        Assert.Equal("MOCK: hello! This is a deterministic mock response for testing purposes.", result3);
+        Assert.Equal("MOCK: Hello! This is a deterministic mock response for testing purposes.", result1);
+        Assert.Equal("MOCK: Hello! This is a deterministic mock response for testing purposes.", result2);
+        Assert.Equal("MOCK: Hello! This is a deterministic mock response for testing purposes.", result3);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class MockLLMClientTests
         Assert.NotNull(result);
         Assert.Contains("MOCK:", result);
         Assert.Contains("test message", result);
-        Assert.Contains("... This is a mock LLM response.", result);
+        Assert.Contains("This is a mock LLM response for testing purposes.", result);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class MockLLMClientTests
         var result = await client.GenerateAsync("   hello   ");
 
         // Assert
-        Assert.Equal("MOCK: hello! This is a deterministic mock response for testing purposes.", result);
+        Assert.Equal("MOCK: Hello! This is a deterministic mock response for testing purposes.", result);
     }
 }
 

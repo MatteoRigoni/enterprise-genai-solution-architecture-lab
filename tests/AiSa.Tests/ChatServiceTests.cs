@@ -28,7 +28,8 @@ public class ChatServiceTests
         var response = new ChatResponse
         {
             Response = "MOCK: Hello ...",
-            CorrelationId = correlationId
+            CorrelationId = correlationId,
+            MessageId = Guid.NewGuid().ToString()
         };
 
         // Assert

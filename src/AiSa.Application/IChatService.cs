@@ -14,6 +14,15 @@ public interface ILLMClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>LLM response text.</returns>
     Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Generate a streaming response from the LLM for the given prompt.
+    /// Yields chunks of text as they become available.
+    /// </summary>
+    /// <param name="prompt">User prompt.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async enumerable of response chunks.</returns>
+    IAsyncEnumerable<string> GenerateStreamAsync(string prompt, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
