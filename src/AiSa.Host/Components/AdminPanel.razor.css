@@ -17,6 +17,17 @@
     padding: 0;
 }
 
-    .admin-panel-content .text-body {
-        margin: 0;
-    }
+.admin-section {
+    margin-top: var(--s-3);
+}
+
+.admin-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-0);
+    margin: 0 0 var(--s-2) 0;
+}
+
+.admin-panel-content .text-body {
+    margin: 0;
+}
