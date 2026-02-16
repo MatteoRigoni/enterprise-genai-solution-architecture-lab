@@ -67,14 +67,14 @@
                                         <FluentButton Appearance="Appearance.Stealth"
                                                      OnClick="@(() => HandleFeedback(message.MessageId, "positive"))"
                                                      Title="Thumbs up"
-                                                     class="@($"feedback-button{(message.FeedbackRating == "positive" ? " feedback-active" : "")}")">
-                                            <FluentIcon Value="@(new Icons.Regular.Size16.ThumbLike())" />
+                                                     class="@GetFeedbackButtonClass(message.FeedbackRating, "positive")">
+                                            <FluentIcon Value="@(new Icons.Regular.Size20.ThumbLike())" />
                                         </FluentButton>
                                         <FluentButton Appearance="Appearance.Stealth"
                                                      OnClick="@(() => HandleFeedback(message.MessageId, "negative"))"
                                                      Title="Thumbs down"
-                                                     class="@($"feedback-button{(message.FeedbackRating == "negative" ? " feedback-active" : "")}")">
-                                            <FluentIcon Value="@(new Icons.Regular.Size16.ThumbDislike())" />
+                                                     class="@GetFeedbackButtonClass(message.FeedbackRating, "negative")">
+                                            <FluentIcon Value="@(new Icons.Regular.Size20.ThumbDislike())" />
                                         </FluentButton>
                                     </div>
                                 }

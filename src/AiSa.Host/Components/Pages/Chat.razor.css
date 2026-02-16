@@ -286,6 +286,10 @@
     gap: var(--s-2);
 }
 
+.assistant-message .message-meta {
+    padding-right: 0;
+}
+
 .message-timestamp {
     font-size: 0.71875rem; /* 11.5px - slightly smaller */
     color: var(--text-2);
@@ -499,71 +503,109 @@
     }
 }
 
-/* Feedback Buttons - Background when active, theme-aware */
+/* Feedback Buttons - Background when active, theme-aware.
+   Wrapper .message-feedback is native HTML so it gets scope; use ::deep to style FluentButton. */
 .message-feedback {
     display: flex;
     gap: var(--s-1);
     align-items: center;
+    margin-left: auto;
+    margin-right: calc(-1 * var(--s-1));
 }
 
-.feedback-button {
+/* Bigger, square (no radius) feedback buttons */
+.message-feedback ::deep .feedback-button {
     background: transparent !important;
     border: none !important;
     padding: var(--s-2) !important;
-    min-width: auto !important;
-    width: auto !important;
-    height: auto !important;
-    border-radius: var(--r-1);
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 0;
     transition: background-color 150ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.feedback-button ::deep .control {
+.message-feedback ::deep .feedback-button .control {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    border-radius: var(--r-1);
+    border-radius: 0;
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     transition: background-color 150ms ease-out;
 }
 
-/* Default state - muted icon */
-.feedback-button ::deep fluent-icon {
+.message-feedback ::deep .feedback-button fluent-icon {
     color: var(--text-2);
     transition: color 150ms ease-out;
 }
 
-.feedback-button ::deep fluent-icon svg {
+.message-feedback ::deep .feedback-button fluent-icon svg {
     fill: currentColor;
     transition: fill 150ms ease-out;
 }
 
-.feedback-button ::deep fluent-icon svg path {
+.message-feedback ::deep .feedback-button fluent-icon svg path {
     fill: currentColor;
     transition: fill 150ms ease-out;
 }
 
-/* Hover state - accent color, subtle background */
-.feedback-button:hover {
+.message-feedback ::deep .feedback-button:hover {
     background-color: var(--accent-primary-alpha) !important;
 }
 
-.feedback-button:hover ::deep .control {
+.message-feedback ::deep .feedback-button:hover .control {
     background-color: var(--accent-primary-alpha) !important;
 }
 
-.feedback-button:hover ::deep fluent-icon {
+.message-feedback ::deep .feedback-button:hover fluent-icon {
     color: var(--accent-primary);
 }
 
-/* Active state - accent color, visible background */
-.feedback-button.feedback-active {
+.message-feedback ::deep .feedback-button.feedback-active {
     background-color: var(--accent-primary-alpha) !important;
+    box-shadow: 0 0 0 2px var(--accent-primary);
 }
 
-.feedback-button.feedback-active ::deep .control {
+.message-feedback ::deep .feedback-button.feedback-active .control {
     background-color: var(--accent-primary-alpha) !important;
+    box-shadow: 0 0 0 2px var(--accent-primary);
 }
 
-.feedback-button.feedback-active ::deep fluent-icon {
+.message-feedback ::deep .feedback-button.feedback-active fluent-icon {
     color: var(--accent-primary);
+}
+
+.message-feedback ::deep .feedback-button.feedback-active-positive {
+    background-color: rgba(var(--accent-primary-rgb, 0 120 212), 0.25) !important;
+    box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.message-feedback ::deep .feedback-button.feedback-active-positive .control {
+    background-color: rgba(var(--accent-primary-rgb, 0 120 212), 0.25) !important;
+}
+
+.message-feedback ::deep .feedback-button.feedback-active-positive fluent-icon {
+    color: var(--accent-primary);
+}
+
+.message-feedback ::deep .feedback-button.feedback-active-negative {
+    background-color: rgba(248, 113, 113, 0.25) !important;
+    box-shadow: 0 0 0 2px var(--danger-0);
+}
+
+.message-feedback ::deep .feedback-button.feedback-active-negative .control {
+    background-color: rgba(248, 113, 113, 0.25) !important;
+}
+
+.message-feedback ::deep .feedback-button.feedback-active-negative fluent-icon {
+    color: var(--danger-0);
 }
 

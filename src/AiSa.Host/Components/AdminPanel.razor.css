@@ -31,3 +31,29 @@
 .admin-panel-content .text-body {
     margin: 0;
 }
+
+/* Row: label + value with clear visual separation */
+.admin-row {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+}
+
+.admin-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-0);
+    background-color: var(--bg-2);
+    border: 1px solid var(--border-0);
+    padding: var(--s-1) var(--s-2);
+    border-radius: var(--r-1);
+}
