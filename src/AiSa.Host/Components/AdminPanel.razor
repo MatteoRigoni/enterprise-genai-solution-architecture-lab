@@ -1,17 +1,37 @@
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.Extensions.Options
+@using AiSa.Infrastructure
 @implements IDialogContentComponent<object>
 
 <div class="admin-panel-content">
     <h2 class="admin-panel-title">Admin</h2>
     <hr class="admin-panel-divider" />
-    <p class="text-body">Coming soon - Administration and configuration interface will be implemented here.</p>
+    <section class="admin-section">
+        <p class="admin-row text-body">
+            <span class="admin-label">Vector store provider</span>
+            <span class="admin-value">@_providerName</span>
+        </p>
+    </section>
 </div>
 
 @code {
+    [Inject]
+    private IOptions<VectorStoreOptions> VectorStoreOptions { get; set; } = null!;
+
+    private string _providerName = "";
+
+    protected override void OnInitialized()
+    {
+        _providerName = VectorStoreOptions?.Value?.Provider?.Trim() ?? "AzureSearch";
+        if (string.IsNullOrEmpty(_providerName)) _providerName = "AzureSearch";
+    }
+
     public object Content { get; set; } = new();
 
     public Task OnDialogOpenAsync(DialogParameters parameters)
     {
+        _providerName = VectorStoreOptions?.Value?.Provider?.Trim() ?? "AzureSearch";
+        if (string.IsNullOrEmpty(_providerName)) _providerName = "AzureSearch";
         return Task.CompletedTask;
     }
 

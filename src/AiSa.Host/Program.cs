@@ -197,10 +197,22 @@ builder.Services.AddSingleton<IDocumentMetadataStore, InMemoryDocumentMetadataSt
 // Retrieval service
 builder.Services.AddScoped<IRetrievalService, RetrievalService>();
 
-// Vector store (Azure AI Search)
-builder.Services.Configure<AzureSearchOptions>(
-    builder.Configuration.GetSection("AzureSearch"));
-builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+// Vector store: provider toggle (ADR-0003)
+var vectorStoreSection = builder.Configuration.GetSection("VectorStore");
+builder.Services.Configure<VectorStoreOptions>(vectorStoreSection);
+builder.Services.Configure<PgVectorOptions>(vectorStoreSection.GetSection("PgVector"));
+
+var vectorStoreProvider = vectorStoreSection.GetValue<string>("Provider") ?? "AzureSearch";
+if (string.Equals(vectorStoreProvider, "PgVector", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<IVectorStore, PgVectorVectorStore>();
+}
+else
+{
+    builder.Services.Configure<AzureSearchOptions>(
+        builder.Configuration.GetSection("AzureSearch"));
+    builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
+}
 
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));

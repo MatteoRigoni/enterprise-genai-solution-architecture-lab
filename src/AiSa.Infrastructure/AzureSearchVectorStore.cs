@@ -1,7 +1,6 @@
 using AiSa.Application;
 using AiSa.Application.Models;
 using Azure;
-using Azure.Core.Pipeline;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;

@@ -433,6 +433,14 @@ public partial class Chat
         return null;
     }
 
+    private static string GetFeedbackButtonClass(string? currentRating, string buttonRating)
+    {
+        if (currentRating != buttonRating) return "feedback-button";
+        return buttonRating == "positive"
+            ? "feedback-button feedback-active feedback-active-positive"
+            : "feedback-button feedback-active feedback-active-negative";
+    }
+
     private async Task HandleFeedback(string messageId, string rating)
     {
         try

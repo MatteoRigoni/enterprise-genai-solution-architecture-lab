@@ -112,7 +112,7 @@ internal static class DocumentEndpoints
                             existingLatest.DocumentId,
                             sanitizedFileName);
                     }
-
+                    
                     // Ingest document
                     using var fileStream = file.OpenReadStream();
                     var ingestionResult = await ingestionService.IngestAsync(
