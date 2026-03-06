@@ -191,9 +191,6 @@ builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 // Document ingestion
 builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
 
-// Document metadata store (in-memory for T02, upgrade to persistent store later)
-builder.Services.AddSingleton<IDocumentMetadataStore, InMemoryDocumentMetadataStore>();
-
 // Retrieval service
 builder.Services.AddScoped<IRetrievalService, RetrievalService>();
 
@@ -213,6 +210,9 @@ else
         builder.Configuration.GetSection("AzureSearch"));
     builder.Services.AddSingleton<IVectorStore, AzureSearchVectorStore>();
 }
+
+// Persist document metadata lifecycle across restarts regardless of selected vector store.
+builder.Services.AddSingleton<IDocumentMetadataStore, PostgresDocumentMetadataStore>();
 
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));

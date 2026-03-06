@@ -14,8 +14,10 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
     public Task StoreAsync(IngestionResult result)
     {
         // Check if this is an update to an existing document
+        var normalizedSourceName = NormalizeSourceName(result.SourceNameNormalized ?? result.SourceName);
+
         var existingLatest = _documents.Values
-            .Where(d => d.SourceName == result.SourceName && !d.IsDeprecated)
+            .Where(d => NormalizeSourceName(d.SourceNameNormalized ?? d.SourceName) == normalizedSourceName && !d.IsDeprecated)
             .OrderByDescending(d => d.Version)
             .FirstOrDefault();
 
@@ -40,7 +42,9 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
                     Status = prevMetadata.Status,
                     Version = prevMetadata.Version,
                     PreviousVersionId = prevMetadata.PreviousVersionId,
-                    IsDeprecated = true
+                    IsDeprecated = true,
+                    SourceNameNormalized = prevMetadata.SourceNameNormalized,
+                    ContentHash = prevMetadata.ContentHash
                 };
                 _documents[existingLatest.DocumentId] = deprecatedMetadata;
             }
@@ -55,7 +59,9 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
             Status = result.Status,
             Version = version,
             PreviousVersionId = previousVersionId,
-            IsDeprecated = false
+            IsDeprecated = false,
+            SourceNameNormalized = normalizedSourceName,
+            ContentHash = result.ContentHash
         };
 
         _documents.AddOrUpdate(
@@ -84,8 +90,9 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
 
     public Task<DocumentMetadata?> GetLatestBySourceNameAsync(string sourceName)
     {
+        var normalizedSourceName = NormalizeSourceName(sourceName);
         var latest = _documents.Values
-            .Where(d => d.SourceName == sourceName && !d.IsDeprecated)
+            .Where(d => NormalizeSourceName(d.SourceNameNormalized ?? d.SourceName) == normalizedSourceName && !d.IsDeprecated)
             .OrderByDescending(d => d.Version)
             .FirstOrDefault();
 
@@ -103,13 +110,20 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
                 ChunkCount = metadata.ChunkCount,
                 IndexedAt = metadata.IndexedAt,
                 Status = metadata.Status,
-                Version = metadata.Version,
-                PreviousVersionId = metadata.PreviousVersionId,
-                IsDeprecated = true
+                    Version = metadata.Version,
+                    PreviousVersionId = metadata.PreviousVersionId,
+                    IsDeprecated = true,
+                    SourceNameNormalized = metadata.SourceNameNormalized,
+                    ContentHash = metadata.ContentHash
             };
             _documents[documentId] = deprecatedMetadata;
         }
 
         return Task.CompletedTask;
+    }
+
+    private static string NormalizeSourceName(string sourceName)
+    {
+        return sourceName.Trim().ToLowerInvariant();
     }
 }

@@ -84,8 +84,11 @@ The Blazor portal exposes each architectural concern as a first-class area:
 - Dual vector store support:
   - Azure AI Search
   - pgvector (PostgreSQL)
+- Metadata lifecycle store:
+  - PostgreSQL-persisted metadata in all modes (including Azure AI Search vector mode)
 - Chunking, embedding, citation enforcement
 - “I don’t know” behavior when ungrounded
+- Idempotent upload semantics via SHA-256 content hash (`new`/`updated`/`unchanged`)
 
 ### 🤖 Agentic AI (Controlled)
 - Planner + execution loop

@@ -34,6 +34,17 @@ public class IngestionResult
     /// Timestamp when ingestion completed.
     /// </summary>
     public required DateTimeOffset CompletedAt { get; init; }
+
+    /// <summary>
+    /// Normalized source name used for deterministic matching/versioning.
+    /// </summary>
+    public string? SourceNameNormalized { get; init; }
+
+    /// <summary>
+    /// SHA-256 hash of the ingested document content.
+    /// Used for idempotency and deduplication.
+    /// </summary>
+    public string? ContentHash { get; init; }
 }
 
 /// <summary>

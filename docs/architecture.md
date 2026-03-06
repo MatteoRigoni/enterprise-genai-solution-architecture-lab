@@ -76,6 +76,11 @@
 - **Responsibility**: Chunks, embeds, and indexes documents
 - **Interfaces**: Vector store abstraction, embedding service
 
+### Document Metadata Store
+- **Responsibility**: Tracks versions, active/deprecated state, normalized source names, and content hash
+- **Interfaces**: `IDocumentMetadataStore`
+- **Storage strategy**: PostgreSQL-backed persistence in all runtime modes (Azure AI Search and pgvector)
+
 ### Auth Middleware
 - **Responsibility**: Authentication and authorization
 - **Interfaces**: Identity provider
@@ -117,16 +122,16 @@ CI/CD → **EvalRunner** → Dataset → **AiSa.Host** API → Metrics → Repor
 ### Document Endpoints
 
 **POST /api/documents** - Upload and ingest document
-- Request: `multipart/form-data` with `file` field (.txt only)
-- Response: `{ "documentId": "...", "status": "completed", "chunkCount": N }`
+- Request: `multipart/form-data` with `file` field (`.txt`, `.csv`)
+- Response: includes `dedupStatus` (`new|updated|unchanged`), `version`, and `contentHash`
 - Rate limit: 5 uploads/minute
 
 **GET /api/documents** - List all ingested documents
-- Response: Array of document metadata
+- Response: Array of active document metadata (includes `version`, normalized name, and content hash)
 
 **PUT /api/documents/{documentId}** - Update document (creates new version)
 - Request: `multipart/form-data` with `file` field
-- Response: New version metadata with `previousVersionId`
+- Response: New version metadata with `previousVersionId`, `version`, and `contentHash`
 
 ### Feedback Endpoint
 
