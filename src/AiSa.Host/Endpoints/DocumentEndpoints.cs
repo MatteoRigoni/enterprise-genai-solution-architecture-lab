@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
 using AiSa.Application;
 using AiSa.Application.Models;
@@ -92,6 +93,7 @@ internal static class DocumentEndpoints
                 // Generate source ID from sanitized filename and timestamp
                 var sourceId = $"{Path.GetFileNameWithoutExtension(sanitizedFileName)}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}";
                 var sourceName = sanitizedFileName;
+                var sourceNameNormalized = sourceName.Trim().ToLowerInvariant();
 
                 // Log metadata only (ADR-0004: no raw content)
                 logger.LogInformation(
@@ -102,8 +104,42 @@ internal static class DocumentEndpoints
 
                 try
                 {
+                    // Read stream once to support deterministic hash + ingestion
+                    await using var uploadedFileStream = file.OpenReadStream();
+                    using var memoryStream = new MemoryStream();
+                    await uploadedFileStream.CopyToAsync(memoryStream, cancellationToken);
+                    memoryStream.Position = 0;
+
+                    var contentHash = ComputeSha256(memoryStream);
+                    memoryStream.Position = 0;
+
                     // Upsert by source name: if same file name already exists, remove old chunks from vector store
                     var existingLatest = await metadataStore.GetLatestBySourceNameAsync(sanitizedFileName);
+
+                    // If content is unchanged, skip ingestion/indexing for idempotency.
+                    if (existingLatest != null &&
+                        string.Equals(existingLatest.ContentHash, contentHash, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogInformation(
+                            "Upload skipped because content hash is unchanged. SourceName: {SourceName}, DocumentId: {DocumentId}",
+                            sanitizedFileName,
+                            existingLatest.DocumentId);
+
+                        return Results.Ok(new
+                        {
+                            documentId = existingLatest.DocumentId,
+                            sourceName = existingLatest.SourceName,
+                            sourceNameNormalized = existingLatest.SourceNameNormalized,
+                            status = "unchanged",
+                            dedupStatus = "unchanged",
+                            version = existingLatest.Version,
+                            chunkCount = existingLatest.ChunkCount,
+                            indexedAt = existingLatest.IndexedAt,
+                            contentHash,
+                            errorMessage = (string?)null
+                        });
+                    }
+
                     if (existingLatest != null)
                     {
                         await vectorStore.DeleteBySourceIdAsync(existingLatest.DocumentId, cancellationToken);
@@ -114,16 +150,30 @@ internal static class DocumentEndpoints
                     }
                     
                     // Ingest document
-                    using var fileStream = file.OpenReadStream();
+                    memoryStream.Position = 0;
                     var ingestionResult = await ingestionService.IngestAsync(
-                        fileStream,
+                        memoryStream,
                         sourceId,
                         sourceName,
                         updateExisting: existingLatest != null,
                         cancellationToken);
 
+                    var metadataResult = new IngestionResult
+                    {
+                        SourceId = ingestionResult.SourceId,
+                        SourceName = ingestionResult.SourceName,
+                        ChunkCount = ingestionResult.ChunkCount,
+                        Status = ingestionResult.Status,
+                        ErrorMessage = ingestionResult.ErrorMessage,
+                        CompletedAt = ingestionResult.CompletedAt,
+                        SourceNameNormalized = sourceNameNormalized,
+                        ContentHash = contentHash
+                    };
+
                     // Store metadata (deprecates previous version if same source name)
-                    await metadataStore.StoreAsync(ingestionResult);
+                    await metadataStore.StoreAsync(metadataResult);
+
+                    var latestMetadata = await metadataStore.GetByIdAsync(ingestionResult.SourceId);
 
                     // Log metadata only
                     logger.LogInformation(
@@ -137,9 +187,13 @@ internal static class DocumentEndpoints
                     {
                         documentId = ingestionResult.SourceId,
                         sourceName = ingestionResult.SourceName,
+                        sourceNameNormalized,
                         status = ingestionResult.Status.ToString().ToLowerInvariant(),
+                        dedupStatus = existingLatest == null ? "new" : "updated",
+                        version = latestMetadata?.Version ?? 1,
                         chunkCount = ingestionResult.ChunkCount,
                         indexedAt = ingestionResult.CompletedAt,
+                        contentHash,
                         errorMessage = ingestionResult.ErrorMessage
                     };
 
@@ -222,6 +276,9 @@ internal static class DocumentEndpoints
                     {
                         documentId = d.DocumentId,
                         sourceName = d.SourceName,
+                        sourceNameNormalized = d.SourceNameNormalized,
+                        version = d.Version,
+                        contentHash = d.ContentHash,
                         chunkCount = d.ChunkCount,
                         indexedAt = d.IndexedAt,
                         status = d.Status.ToString().ToLowerInvariant()
@@ -310,7 +367,7 @@ internal static class DocumentEndpoints
                 }
 
                 // Validate file type
-                var allowedExtensions = new[] { ".txt" };
+                var allowedExtensions = new[] { ".txt", ".csv" };
                 var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
                 if (!allowedExtensions.Contains(fileExtension))
                 {
@@ -335,6 +392,7 @@ internal static class DocumentEndpoints
 
                 // Generate new source ID for new version
                 var newSourceId = $"{Path.GetFileNameWithoutExtension(sanitizedFileName)}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}";
+                var sourceNameNormalized = sanitizedFileName.Trim().ToLowerInvariant();
 
                 logger.LogInformation(
                     "Updating document. DocumentId: {DocumentId}, NewSourceId: {NewSourceId}, FileName: {FileName}",
@@ -348,16 +406,37 @@ internal static class DocumentEndpoints
                     await vectorStore.DeleteBySourceIdAsync(existingDoc.DocumentId, cancellationToken);
 
                     // Ingest new version
-                    using var fileStream = file.OpenReadStream();
+                    await using var uploadedFileStream = file.OpenReadStream();
+                    using var memoryStream = new MemoryStream();
+                    await uploadedFileStream.CopyToAsync(memoryStream, cancellationToken);
+                    memoryStream.Position = 0;
+
+                    var contentHash = ComputeSha256(memoryStream);
+                    memoryStream.Position = 0;
+
                     var ingestionResult = await ingestionService.IngestAsync(
-                        fileStream,
+                        memoryStream,
                         newSourceId,
                         sanitizedFileName,
                         updateExisting: true,
                         cancellationToken);
 
+                    var metadataResult = new IngestionResult
+                    {
+                        SourceId = ingestionResult.SourceId,
+                        SourceName = ingestionResult.SourceName,
+                        ChunkCount = ingestionResult.ChunkCount,
+                        Status = ingestionResult.Status,
+                        ErrorMessage = ingestionResult.ErrorMessage,
+                        CompletedAt = ingestionResult.CompletedAt,
+                        SourceNameNormalized = sourceNameNormalized,
+                        ContentHash = contentHash
+                    };
+
                     // Store metadata (versioning handled in metadata store)
-                    await metadataStore.StoreAsync(ingestionResult);
+                    await metadataStore.StoreAsync(metadataResult);
+
+                    var latestMetadata = await metadataStore.GetByIdAsync(ingestionResult.SourceId);
 
                     if (ingestionResult.Status == IngestionStatus.Failed)
                     {
@@ -371,9 +450,13 @@ internal static class DocumentEndpoints
                     {
                         documentId = ingestionResult.SourceId,
                         sourceName = ingestionResult.SourceName,
+                        sourceNameNormalized,
                         status = ingestionResult.Status.ToString().ToLowerInvariant(),
+                        dedupStatus = "updated",
+                        version = latestMetadata?.Version ?? existingDoc.Version + 1,
                         chunkCount = ingestionResult.ChunkCount,
                         indexedAt = ingestionResult.CompletedAt,
+                        contentHash,
                         previousVersionId = documentId
                     };
 
@@ -424,5 +507,12 @@ internal static class DocumentEndpoints
             .DisableAntiforgery();
 
         return app;
+}
+
+    private static string ComputeSha256(Stream stream)
+    {
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(stream);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

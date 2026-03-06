@@ -17,6 +17,8 @@ Implement ingestion and retrieval using Azure AI Search as vector store, and sho
 
 ## Acceptance Criteria
 - Upload a doc -> it becomes searchable.
+- Uploading the same document content twice should be idempotent (`unchanged` status).
+- Uploading a changed version with same source name should supersede previous active version.
 - /api/chat answers with citations referencing doc chunks.
 - If retrieval returns empty -> assistant replies "I don't know based on provided documents."
 - Add ADR:
