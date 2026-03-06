@@ -12,6 +12,8 @@
 - **Vector Store**: External vector database (Azure AI Search, pgvector)
 - **Identity**: Authentication and authorization provider
 - **Observability Backend**: Telemetry collection and dashboards (OpenTelemetry)
+- **MCP Registry**: Tenant-aware discovery of app tool providers
+- **App MCP Servers**: Domain app backends exposing tools/list and tools/call
 
 **Relationships:**
 - User → AiSa System (uses)
@@ -20,6 +22,8 @@
 - AiSa System → Vector Store (queries)
 - AiSa System → Identity (authenticates)
 - AiSa System → Observability Backend (emits telemetry)
+- AiSa System → MCP Registry (discovers providers/tools)
+- AiSa System → App MCP Servers (executes approved tool calls)
 
 ## L2: Containers
 
@@ -101,6 +105,9 @@ User → **AiSa.Host** → Agent orchestrator → Plan → Step loop → Tool Ro
 
 ### 5. Evaluation Flow
 CI/CD → **EvalRunner** → Dataset → **AiSa.Host** API → Metrics → Report → CI gate
+
+### 6. MCP Chat Orchestration Flow (Approval-Gated)
+User → **AiSa.Host** (`/api/chat`) → Auth context load → **MCP Registry** discovery → tool filtering (AuthZ) → **LLM Provider** (tool proposal) → gatekeeper validation/policy → optional `/api/chat/confirm` → **App MCP Server** (`tools/call`) → final response
 
 ## API Reference
 

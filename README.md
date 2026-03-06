@@ -74,6 +74,7 @@ The Blazor portal exposes each architectural concern as a first-class area:
 - **Cost & FinOps** – Token usage, budgets, degradation
 - **Governance** – Data classification & policies
 - **Security** – Threats, mitigations, compliance
+- **MCP Integration** – Orchestrator, registry, approval-gated tool execution
 - **Admin** – Provider configuration & health checks
 
 <hr>
@@ -144,6 +145,7 @@ This playground also keeps business impact visible:
 - `docs/adr/` – Architectural Decision Records
 - `docs/governance.md` – Data & knowledge governance
 - `docs/security.md` – Threat model and compliance
+- `docs/mcp-integration-showcase.md` – MCP orchestration and approval-gated tooling blueprint
 - `docs/cost-model.md` – Cost & FinOps strategy
 - `docs/runbooks/` – Operational procedures
 
