@@ -1,0 +1,202 @@
+{
+  "name": "base",
+  "version": "2.0.0",
+  "questions": [
+    {
+      "question": "What is AcmeCloud?",
+      "expectedKeyFacts": [
+        "cloud storage service",
+        "upload",
+        "organize",
+        "share files",
+        "securely across devices"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "product"
+    },
+    {
+      "question": "What does AcmeCloud allow users to do?",
+      "expectedKeyFacts": [
+        "upload",
+        "organize",
+        "share files"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "product"
+    },
+    {
+      "question": "How can I reset my password on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Settings",
+        "Security",
+        "Reset Password",
+        "email",
+        "reset link"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "account"
+    },
+    {
+      "question": "How long is the password reset link valid?",
+      "expectedKeyFacts": [
+        "15 minutes"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "account"
+    },
+    {
+      "question": "What file types does AcmeCloud support?",
+      "expectedKeyFacts": [
+        "PDF",
+        "DOCX",
+        "JPG",
+        "PNG",
+        "MP4",
+        "ZIP"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "Are executable files allowed on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Executable files",
+        "blocked"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "What is the storage limit on the AcmeCloud free plan?",
+      "expectedKeyFacts": [
+        "free plan",
+        "5 GB"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "plans"
+    },
+    {
+      "question": "How much storage do I get for free on AcmeCloud?",
+      "expectedKeyFacts": [
+        "5 GB",
+        "free"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "plans"
+    },
+    {
+      "question": "Can I share files with people outside my organization on AcmeCloud?",
+      "expectedKeyFacts": [
+        "share link",
+        "external users"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "sharing"
+    },
+    {
+      "question": "What sharing permissions are available on AcmeCloud?",
+      "expectedKeyFacts": [
+        "View only",
+        "Comment",
+        "Edit"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "sharing"
+    },
+    {
+      "question": "How do I share a file on AcmeCloud?",
+      "expectedKeyFacts": [
+        "share link",
+        "permissions"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "sharing"
+    },
+    {
+      "question": "How long are deleted files kept in AcmeCloud before permanent removal?",
+      "expectedKeyFacts": [
+        "Trash",
+        "30 days",
+        "permanently removed"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "What happens to files I delete on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Trash",
+        "30 days"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "Can I recover a file I deleted on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Trash",
+        "30 days"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "Does AcmeCloud offer refunds for monthly subscriptions?",
+      "expectedKeyFacts": [
+        "Monthly subscriptions",
+        "non-refundable"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "billing"
+    },
+    {
+      "question": "What is the refund policy for yearly subscriptions on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Yearly subscriptions",
+        "14 days",
+        "1 GB"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "billing"
+    },
+    {
+      "question": "Under what conditions can I get a refund on a yearly AcmeCloud plan?",
+      "expectedKeyFacts": [
+        "14 days",
+        "under 1 GB"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "billing"
+    },
+    {
+      "question": "How do I contact AcmeCloud support?",
+      "expectedKeyFacts": [
+        "in-app chat",
+        "email"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "support"
+    },
+    {
+      "question": "What are AcmeCloud support hours?",
+      "expectedKeyFacts": [
+        "Monday",
+        "Friday",
+        "9:00",
+        "18:00",
+        "UTC"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "support"
+    },
+    {
+      "question": "Is AcmeCloud support available on weekends?",
+      "expectedKeyFacts": [
+        "Monday",
+        "Friday"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "support"
+    }
+  ]
+}
