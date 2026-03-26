@@ -217,6 +217,9 @@ builder.Services.AddSingleton<IDocumentMetadataStore, PostgresDocumentMetadataSt
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));
 
+// Eval metrics service
+builder.Services.AddSingleton<AiSa.Application.Eval.IEvalService, AiSa.Application.Eval.EvalService>();
+
 // RFC7807 ProblemDetails
 builder.Services.AddProblemDetails(options =>
 {
@@ -357,6 +360,7 @@ app.MapRazorComponents<App>()
 app.MapChatEndpoints();
 app.MapDocumentEndpoints();
 app.MapFeedbackEndpoints();
+app.MapEvalEndpoints();
 
 // Fake Login/Logout endpoints (for demo purposes)
 app.MapGet("/Account/Login", async (HttpContext context) =>
