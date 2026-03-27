@@ -9,8 +9,6 @@ namespace AiSa.Infrastructure;
 /// </summary>
 public sealed class CreateSupportTicketToolHandler : IToolHandler
 {
-    public const string ToolName = "CreateSupportTicket";
-
     private readonly ILogger<CreateSupportTicketToolHandler> _logger;
 
     public CreateSupportTicketToolHandler(ILogger<CreateSupportTicketToolHandler> logger)
@@ -18,7 +16,7 @@ public sealed class CreateSupportTicketToolHandler : IToolHandler
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public string Name => ToolName;
+    public string Name => KnownToolNames.CreateSupportTicket;
 
     public Task<string> ExecuteAsync(ToolCallProposal proposal, CancellationToken cancellationToken = default)
     {

@@ -138,6 +138,9 @@ builder.Services.AddSingleton<ISecurityService, SecurityService>();
 builder.Services.Configure<ToolCallingOptions>(
     builder.Configuration.GetSection(ToolCallingOptions.SectionName));
 builder.Services.AddSingleton<IToolCallParser, ToolCallParser>();
+builder.Services.AddSingleton<IToolInputValidator, GetOrderStatusToolInputValidator>();
+builder.Services.AddSingleton<IToolInputValidator, CreateSupportTicketToolInputValidator>();
+builder.Services.AddSingleton<IToolInputValidatorRegistry, ToolInputValidatorRegistry>();
 builder.Services.AddSingleton<IToolHandler, GetOrderStatusToolHandler>();
 builder.Services.AddSingleton<IToolHandler, CreateSupportTicketToolHandler>();
 builder.Services.AddSingleton<IToolRegistry, ToolRegistry>();

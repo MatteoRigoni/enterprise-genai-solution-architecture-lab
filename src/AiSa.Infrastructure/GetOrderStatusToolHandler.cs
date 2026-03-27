@@ -9,8 +9,6 @@ namespace AiSa.Infrastructure;
 /// </summary>
 public sealed class GetOrderStatusToolHandler : IToolHandler
 {
-    public const string ToolName = "GetOrderStatus";
-
     private readonly ILogger<GetOrderStatusToolHandler> _logger;
 
     public GetOrderStatusToolHandler(ILogger<GetOrderStatusToolHandler> logger)
@@ -18,7 +16,7 @@ public sealed class GetOrderStatusToolHandler : IToolHandler
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public string Name => ToolName;
+    public string Name => KnownToolNames.GetOrderStatus;
 
     public Task<string> ExecuteAsync(ToolCallProposal proposal, CancellationToken cancellationToken = default)
     {

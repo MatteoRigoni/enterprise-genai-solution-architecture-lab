@@ -23,6 +23,7 @@ public class ChatService : IChatService
     private readonly IOptions<ToolCallingOptions> _toolCallingOptions;
     private readonly IToolCallParser _toolCallParser;
     private readonly IToolRegistry _toolRegistry;
+    private readonly IToolInputValidatorRegistry _toolInputValidatorRegistry;
 
     public ChatService(
         ILLMClient llmClient,
@@ -33,7 +34,8 @@ public class ChatService : IChatService
         ILogger<ChatService> logger,
         IOptions<ToolCallingOptions> toolCallingOptions,
         IToolCallParser toolCallParser,
-        IToolRegistry toolRegistry)
+        IToolRegistry toolRegistry,
+        IToolInputValidatorRegistry toolInputValidatorRegistry)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         _retrievalService = retrievalService ?? throw new ArgumentNullException(nameof(retrievalService));
@@ -44,6 +46,7 @@ public class ChatService : IChatService
         _toolCallingOptions = toolCallingOptions ?? throw new ArgumentNullException(nameof(toolCallingOptions));
         _toolCallParser = toolCallParser ?? throw new ArgumentNullException(nameof(toolCallParser));
         _toolRegistry = toolRegistry ?? throw new ArgumentNullException(nameof(toolRegistry));
+        _toolInputValidatorRegistry = toolInputValidatorRegistry ?? throw new ArgumentNullException(nameof(toolInputValidatorRegistry));
     }
 
     public async Task<ChatResponse> ProcessChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -216,10 +219,31 @@ public class ChatService : IChatService
                     correlationId);
                 responseText = "That tool is not available.";
             }
+            else if (!_toolInputValidatorRegistry.TryGetValidator(proposal.Name, out var inputValidator) ||
+                     inputValidator == null)
+            {
+                _logger.LogWarning(
+                    "Tool has no input validator registered. ToolName: {ToolName}, CorrelationId: {CorrelationId}",
+                    proposal.Name,
+                    correlationId);
+                responseText = "That tool is not available.";
+            }
             else
             {
-                activity?.SetTag("tool.name", proposal.Name);
-                responseText = await handler.ExecuteAsync(proposal, cancellationToken);
+                var validation = inputValidator.Validate(proposal);
+                if (!validation.IsValid)
+                {
+                    _logger.LogWarning(
+                        "Tool input validation failed. ToolName: {ToolName}, CorrelationId: {CorrelationId}",
+                        proposal.Name,
+                        correlationId);
+                    responseText = validation.UserSafeMessage ?? "Request could not be processed.";
+                }
+                else
+                {
+                    activity?.SetTag("tool.name", proposal.Name);
+                    responseText = await handler.ExecuteAsync(proposal, cancellationToken);
+                }
             }
         }
 

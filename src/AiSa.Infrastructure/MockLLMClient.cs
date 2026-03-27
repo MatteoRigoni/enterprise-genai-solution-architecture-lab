@@ -37,7 +37,7 @@ public class MockLLMClient : ILLMClient
                 var orderId = orderMatch.Groups[1].Value;
                 var payload = JsonSerializer.Serialize(new
                 {
-                    name = GetOrderStatusToolHandler.ToolName,
+                    name = KnownToolNames.GetOrderStatus,
                     arguments = new { orderId }
                 });
                 return Task.FromResult($"<tool_call>{payload}</tool_call>");
@@ -51,7 +51,7 @@ public class MockLLMClient : ILLMClient
                 var details = userQuestion.Length > 500 ? userQuestion[..500] : userQuestion;
                 var payload = JsonSerializer.Serialize(new
                 {
-                    name = CreateSupportTicketToolHandler.ToolName,
+                    name = KnownToolNames.CreateSupportTicket,
                     arguments = new { subject, details }
                 });
                 return Task.FromResult($"<tool_call>{payload}</tool_call>");
