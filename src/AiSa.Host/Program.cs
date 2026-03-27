@@ -144,6 +144,7 @@ builder.Services.AddSingleton<IToolInputValidatorRegistry, ToolInputValidatorReg
 builder.Services.AddSingleton<IToolHandler, GetOrderStatusToolHandler>();
 builder.Services.AddSingleton<IToolHandler, CreateSupportTicketToolHandler>();
 builder.Services.AddSingleton<IToolRegistry, ToolRegistry>();
+builder.Services.AddSingleton<IToolOutputSanitizer, ToolOutputSanitizer>();
 
 // Rate limiting
 builder.Services.Configure<RateLimitingOptions>(

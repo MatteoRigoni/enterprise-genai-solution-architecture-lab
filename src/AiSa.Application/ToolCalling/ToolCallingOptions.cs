@@ -12,4 +12,7 @@ public class ToolCallingOptions
 
     /// <summary>Hard cap on tool executions per chat turn (defaults to 1).</summary>
     public int MaxToolCallsPerRequest { get; set; } = 1;
+
+    /// <summary>Max length of tool output returned to the user after redaction (T05.C).</summary>
+    public int MaxToolOutputCharacters { get; set; } = ToolCallingOutputLimits.DefaultMaxCharacters;
 }

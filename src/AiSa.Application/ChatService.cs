@@ -24,6 +24,7 @@ public class ChatService : IChatService
     private readonly IToolCallParser _toolCallParser;
     private readonly IToolRegistry _toolRegistry;
     private readonly IToolInputValidatorRegistry _toolInputValidatorRegistry;
+    private readonly IToolOutputSanitizer _toolOutputSanitizer;
 
     public ChatService(
         ILLMClient llmClient,
@@ -35,7 +36,8 @@ public class ChatService : IChatService
         IOptions<ToolCallingOptions> toolCallingOptions,
         IToolCallParser toolCallParser,
         IToolRegistry toolRegistry,
-        IToolInputValidatorRegistry toolInputValidatorRegistry)
+        IToolInputValidatorRegistry toolInputValidatorRegistry,
+        IToolOutputSanitizer toolOutputSanitizer)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         _retrievalService = retrievalService ?? throw new ArgumentNullException(nameof(retrievalService));
@@ -47,6 +49,7 @@ public class ChatService : IChatService
         _toolCallParser = toolCallParser ?? throw new ArgumentNullException(nameof(toolCallParser));
         _toolRegistry = toolRegistry ?? throw new ArgumentNullException(nameof(toolRegistry));
         _toolInputValidatorRegistry = toolInputValidatorRegistry ?? throw new ArgumentNullException(nameof(toolInputValidatorRegistry));
+        _toolOutputSanitizer = toolOutputSanitizer ?? throw new ArgumentNullException(nameof(toolOutputSanitizer));
     }
 
     public async Task<ChatResponse> ProcessChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -205,10 +208,25 @@ public class ChatService : IChatService
             && _toolCallParser.TryParse(responseText, out var proposal)
             && proposal != null)
         {
+            var argsHash = ToolProposalArgsHasher.ComputeSha256Hex(proposal);
+
+            void Audit(ToolProposalAuditOutcome outcome, int sanitizedOutputLength = 0, int redactionCount = 0)
+            {
+                _logger.LogInformation(
+                    "ToolProposalAudit. ToolName: {ToolName}, ArgsHash: {ArgsHash}, Outcome: {Outcome}, CorrelationId: {CorrelationId}, SanitizedOutputLength: {SanitizedOutputLength}, RedactionCount: {RedactionCount}",
+                    proposal.Name,
+                    argsHash,
+                    outcome,
+                    correlationId,
+                    sanitizedOutputLength,
+                    redactionCount);
+            }
+
             if (_toolCallingOptions.Value.MaxToolCallsPerRequest < 1)
             {
                 _logger.LogWarning("Tool call blocked by MaxToolCallsPerRequest. CorrelationId: {CorrelationId}",
                     correlationId);
+                Audit(ToolProposalAuditOutcome.BlockedByConfig);
                 responseText = "Tool execution is disabled by configuration.";
             }
             else if (!_toolRegistry.TryGetHandler(proposal.Name, out var handler) || handler == null)
@@ -217,6 +235,7 @@ public class ChatService : IChatService
                     "Disallowed tool proposal (not allow-listed). ToolName: {ToolName}, CorrelationId: {CorrelationId}",
                     proposal.Name,
                     correlationId);
+                Audit(ToolProposalAuditOutcome.BlockedNotAllowlisted);
                 responseText = "That tool is not available.";
             }
             else if (!_toolInputValidatorRegistry.TryGetValidator(proposal.Name, out var inputValidator) ||
@@ -226,6 +245,7 @@ public class ChatService : IChatService
                     "Tool has no input validator registered. ToolName: {ToolName}, CorrelationId: {CorrelationId}",
                     proposal.Name,
                     correlationId);
+                Audit(ToolProposalAuditOutcome.BlockedNoValidator);
                 responseText = "That tool is not available.";
             }
             else
@@ -237,12 +257,33 @@ public class ChatService : IChatService
                         "Tool input validation failed. ToolName: {ToolName}, CorrelationId: {CorrelationId}",
                         proposal.Name,
                         correlationId);
+                    Audit(ToolProposalAuditOutcome.ValidationFailed);
                     responseText = validation.UserSafeMessage ?? "Request could not be processed.";
                 }
                 else
                 {
                     activity?.SetTag("tool.name", proposal.Name);
-                    responseText = await handler.ExecuteAsync(proposal, cancellationToken);
+                    try
+                    {
+                        var rawToolOutput = await handler.ExecuteAsync(proposal, cancellationToken);
+                        var sanitized = _toolOutputSanitizer.Sanitize(rawToolOutput);
+                        responseText = sanitized.Text;
+                        Audit(ToolProposalAuditOutcome.Executed, sanitized.Text.Length, sanitized.RedactionCount);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            "Tool execution failed. ToolName: {ToolName}, CorrelationId: {CorrelationId}, ErrorType: {ErrorType}",
+                            proposal.Name,
+                            correlationId,
+                            ex.GetType().Name);
+                        Audit(ToolProposalAuditOutcome.ToolError);
+                        responseText = "The operation could not be completed. Please try again later.";
+                    }
                 }
             }
         }
