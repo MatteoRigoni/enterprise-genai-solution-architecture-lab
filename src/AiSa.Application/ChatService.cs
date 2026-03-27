@@ -3,7 +3,9 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using AiSa.Application.Models;
+using AiSa.Application.ToolCalling;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AiSa.Application;
 
@@ -18,6 +20,9 @@ public class ChatService : IChatService
     private readonly ISecurityService _securityService;
     private readonly ActivitySource _activitySource;
     private readonly ILogger<ChatService> _logger;
+    private readonly IOptions<ToolCallingOptions> _toolCallingOptions;
+    private readonly IToolCallParser _toolCallParser;
+    private readonly IToolRegistry _toolRegistry;
 
     public ChatService(
         ILLMClient llmClient,
@@ -25,7 +30,10 @@ public class ChatService : IChatService
         ICacheService cacheService,
         ISecurityService securityService,
         ActivitySource activitySource,
-        ILogger<ChatService> logger)
+        ILogger<ChatService> logger,
+        IOptions<ToolCallingOptions> toolCallingOptions,
+        IToolCallParser toolCallParser,
+        IToolRegistry toolRegistry)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         _retrievalService = retrievalService ?? throw new ArgumentNullException(nameof(retrievalService));
@@ -33,6 +41,9 @@ public class ChatService : IChatService
         _securityService = securityService ?? throw new ArgumentNullException(nameof(securityService));
         _activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _toolCallingOptions = toolCallingOptions ?? throw new ArgumentNullException(nameof(toolCallingOptions));
+        _toolCallParser = toolCallParser ?? throw new ArgumentNullException(nameof(toolCallParser));
+        _toolRegistry = toolRegistry ?? throw new ArgumentNullException(nameof(toolRegistry));
     }
 
     public async Task<ChatResponse> ProcessChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -114,7 +125,8 @@ public class ChatService : IChatService
         }
 
         // Step 3: Build prompt with context and citations (use sanitized message)
-        var prompt = BuildPromptWithContext(sanitizedMessage, resultsList);
+        var toolCallingEnabled = _toolCallingOptions.Value.Enabled;
+        var prompt = BuildPromptWithContext(sanitizedMessage, resultsList, toolCallingEnabled);
         var citations = resultsList.Select(r => new Citation
         {
             SourceName = r.Chunk.SourceName,
@@ -186,17 +198,45 @@ public class ChatService : IChatService
         activity?.SetTag("llm.response.length", responseLength);
         activity?.SetStatus(ActivityStatusCode.Ok);
 
-            var messageId = Guid.NewGuid().ToString();
-            return new ChatResponse
+        if (toolCallingEnabled
+            && _toolCallParser.TryParse(responseText, out var proposal)
+            && proposal != null)
+        {
+            if (_toolCallingOptions.Value.MaxToolCallsPerRequest < 1)
             {
-                Response = responseText,
-                CorrelationId = correlationId,
-                MessageId = messageId,
-                Citations = citations
-            };
+                _logger.LogWarning("Tool call blocked by MaxToolCallsPerRequest. CorrelationId: {CorrelationId}",
+                    correlationId);
+                responseText = "Tool execution is disabled by configuration.";
+            }
+            else if (!_toolRegistry.TryGetHandler(proposal.Name, out var handler) || handler == null)
+            {
+                _logger.LogWarning(
+                    "Disallowed tool proposal (not allow-listed). ToolName: {ToolName}, CorrelationId: {CorrelationId}",
+                    proposal.Name,
+                    correlationId);
+                responseText = "That tool is not available.";
+            }
+            else
+            {
+                activity?.SetTag("tool.name", proposal.Name);
+                responseText = await handler.ExecuteAsync(proposal, cancellationToken);
+            }
+        }
+
+        var messageId = Guid.NewGuid().ToString();
+        return new ChatResponse
+        {
+            Response = responseText,
+            CorrelationId = correlationId,
+            MessageId = messageId,
+            Citations = citations
+        };
     }
 
-    private static string BuildPromptWithContext(string userQuery, IEnumerable<SearchResult> searchResults)
+    private static string BuildPromptWithContext(
+        string userQuery,
+        IEnumerable<SearchResult> searchResults,
+        bool includeToolCallingInstructions = false)
     {
         var prompt = new StringBuilder();
 
@@ -221,7 +261,28 @@ public class ChatService : IChatService
         prompt.AppendLine();
         prompt.AppendLine($"Question: {userQuery}");
         prompt.AppendLine();
-        prompt.AppendLine("Answer based on the provided context. If the context doesn't contain enough information to answer the question, say 'I don't know based on provided documents.'");
+        if (includeToolCallingInstructions)
+        {
+            prompt.AppendLine(ToolCallingPrompt.AllowedToolsSectionHeader);
+            prompt.AppendLine("- GetOrderStatus — arguments: { \"orderId\": string }");
+            prompt.AppendLine("- CreateSupportTicket — arguments: { \"subject\": string, \"details\": string }");
+            prompt.AppendLine();
+            prompt.AppendLine("You may call at most one tool when it is the most helpful way to answer. If you choose to use a tool, reply with exactly one line: only a <tool_call>...</tool_call> block (valid JSON inside the tags), and nothing else.");
+            prompt.AppendLine("<tool_call>{\"name\":\"GetOrderStatus\",\"arguments\":{\"orderId\":\"...\"}}</tool_call>");
+            prompt.AppendLine("or");
+            prompt.AppendLine(
+                "<tool_call>{\"name\":\"CreateSupportTicket\",\"arguments\":{\"subject\":\"...\",\"details\":\"...\"}}</tool_call>");
+            prompt.AppendLine();
+            prompt.AppendLine(
+                "If you do not use a tool, answer in plain text using only the document excerpts above. If those excerpts are not sufficient for the question, say 'I don't know based on provided documents.'");
+            prompt.AppendLine(
+                "Note: live order status or opening a support ticket may not appear in the excerpts; when the user clearly asks for those, deciding to use the matching tool is appropriate.");
+        }
+        else
+        {
+            prompt.AppendLine(
+                "Answer based on the provided context. If the context doesn't contain enough information to answer the question, say 'I don't know based on provided documents.'");
+        }
 
         return prompt.ToString();
     }

@@ -55,19 +55,7 @@ public class AzureOpenAILLMClient : ILLMClient
 
         var requestUri = $"/openai/deployments/{_deploymentName}/chat/completions?api-version=2024-02-15-preview";
 
-        var requestBody = new
-        {
-            messages = new[]
-            {
-                new
-                {
-                    role = "user",
-                    content = prompt
-                }
-            },
-            temperature = 0.7,
-            max_tokens = 2000
-        };
+        var requestBody = CreateChatCompletionPayload(stream: false, prompt);
 
         var response = await _httpClient.PostAsJsonAsync(requestUri, requestBody, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -106,20 +94,7 @@ public class AzureOpenAILLMClient : ILLMClient
 
         var requestUri = $"/openai/deployments/{_deploymentName}/chat/completions?api-version=2024-02-15-preview";
 
-        var requestBody = new
-        {
-            messages = new[]
-            {
-                new
-                {
-                    role = "user",
-                    content = prompt
-                }
-            },
-            temperature = 0.7,
-            max_tokens = 2000,
-            stream = true // Enable streaming
-        };
+        var requestBody = CreateChatCompletionPayload(stream: true, prompt);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
         {
@@ -185,5 +160,20 @@ public class AzureOpenAILLMClient : ILLMClient
         _logger.LogInformation(
             "Streaming LLM response completed. Deployment: {Deployment}",
             _deploymentName);
+    }
+
+    /// <summary>Showcase default: one user turn carrying RAG + optional tools; model decides tool vs plain answer.</summary>
+    private static object CreateChatCompletionPayload(bool stream, string prompt)
+    {
+        var messages = new[]
+        {
+            new { role = "user", content = prompt }
+        };
+        const double temperature = 0.7;
+
+        if (stream)
+            return new { messages, temperature, max_tokens = 2000, stream = true };
+
+        return new { messages, temperature, max_tokens = 2000 };
     }
 }

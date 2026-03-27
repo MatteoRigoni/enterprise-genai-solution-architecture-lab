@@ -1,0 +1,63 @@
+{
+  "datasetName": "base",
+  "datasetVersion": "1.0.0",
+  "metrics": {
+    "answeredRate": 0,
+    "citationPresenceRate": 1,
+    "citationAccuracyRate": 0,
+    "hallucinationRate": 1,
+    "avgLatencyMs": 1290.6,
+    "p95LatencyMs": 1290,
+    "totalQuestions": 5,
+    "timestamp": "2026-03-26T19:31:58.3358922+00:00"
+  },
+  "results": [
+    {
+      "question": "What is the primary purpose of the AiSa lab architecture?",
+      "actualResponse": "I don\u0027t know based on provided documents.",
+      "answered": false,
+      "citationsPresent": true,
+      "citationAccurate": false,
+      "hallucinationDetected": true,
+      "latencyMs": 2437
+    },
+    {
+      "question": "Which architectural decision describes the single host pattern for AiSa?",
+      "actualResponse": "I don\u0027t know based on provided documents.",
+      "answered": false,
+      "citationsPresent": true,
+      "citationAccurate": false,
+      "hallucinationDetected": true,
+      "latencyMs": 865
+    },
+    {
+      "question": "How does AiSa ensure provider-agnostic LLM integration?",
+      "actualResponse": "I don\u0027t know based on provided documents.",
+      "answered": false,
+      "citationsPresent": true,
+      "citationAccurate": false,
+      "hallucinationDetected": true,
+      "latencyMs": 1290
+    },
+    {
+      "question": "What guardrails are in place to prevent logging PII in AiSa?",
+      "actualResponse": "I don\u0027t know based on provided documents.",
+      "answered": false,
+      "citationsPresent": true,
+      "citationAccurate": false,
+      "hallucinationDetected": true,
+      "latencyMs": 915
+    },
+    {
+      "question": "Where is the retrieval-augmented generation flow documented for AiSa?",
+      "actualResponse": "I don\u0027t know based on provided documents.",
+      "answered": false,
+      "citationsPresent": true,
+      "citationAccurate": false,
+      "hallucinationDetected": true,
+      "latencyMs": 946
+    }
+  ],
+  "runTimestamp": "2026-03-26T19:31:58.3363064+00:00",
+  "runDurationMs": 6457
+}

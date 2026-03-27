@@ -1,5 +1,7 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using AiSa.Application;
+using AiSa.Application.ToolCalling;
 
 namespace AiSa.Infrastructure;
 
@@ -22,10 +24,55 @@ public class MockLLMClient : ILLMClient
         // Generate a mock response based on the question
         string response;
         
-        if (prompt.Trim().Equals("hello", StringComparison.OrdinalIgnoreCase) || 
+        if (prompt.Trim().Equals("hello", StringComparison.OrdinalIgnoreCase) ||
             userQuestion.Equals("hello", StringComparison.OrdinalIgnoreCase))
         {
             response = "MOCK: Hello! This is a deterministic mock response for testing purposes.";
+        }
+        else if (prompt.Contains(ToolCallingPrompt.AllowedToolsSectionHeader, StringComparison.Ordinal))
+        {
+            var orderMatch = Regex.Match(userQuestion, @"\border\s+([A-Za-z0-9_-]+)\b", RegexOptions.IgnoreCase);
+            if (orderMatch.Success)
+            {
+                var orderId = orderMatch.Groups[1].Value;
+                var payload = JsonSerializer.Serialize(new
+                {
+                    name = GetOrderStatusToolHandler.ToolName,
+                    arguments = new { orderId }
+                });
+                return Task.FromResult($"<tool_call>{payload}</tool_call>");
+            }
+
+            if (userQuestion.Contains("ticket", StringComparison.OrdinalIgnoreCase) &&
+                (userQuestion.Contains("support", StringComparison.OrdinalIgnoreCase) ||
+                 userQuestion.Contains("create", StringComparison.OrdinalIgnoreCase)))
+            {
+                var subject = userQuestion.Length > 80 ? userQuestion[..80] : userQuestion;
+                var details = userQuestion.Length > 500 ? userQuestion[..500] : userQuestion;
+                var payload = JsonSerializer.Serialize(new
+                {
+                    name = CreateSupportTicketToolHandler.ToolName,
+                    arguments = new { subject, details }
+                });
+                return Task.FromResult($"<tool_call>{payload}</tool_call>");
+            }
+
+            if (contextMatches.Count > 0)
+            {
+                var firstChunk = contextMatches[0];
+                var sourceName = firstChunk.Groups[1].Value.Trim();
+                var chunkId = firstChunk.Groups[2].Value.Trim();
+                var chunkContent = firstChunk.Groups[3].Value.Trim();
+                var relevantInfo = ExtractRelevantInfo(userQuestion, chunkContent);
+                response = !string.IsNullOrEmpty(relevantInfo)
+                    ? $"Based on the provided documents, {relevantInfo} [doc: {sourceName}, chunk: {chunkId}]"
+                    : $"Based on the provided context, I can help you with information about {userQuestion}. [doc: {sourceName}, chunk: {chunkId}]";
+            }
+            else
+            {
+                response =
+                    $"MOCK: I understand you're asking about '{userQuestion}'. This is a mock LLM response for testing purposes.";
+            }
         }
         else if (contextMatches.Count > 0)
         {

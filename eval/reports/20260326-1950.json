@@ -1,0 +1,63 @@
+{
+  "datasetName": "base",
+  "datasetVersion": "2.0.0",
+  "metrics": {
+    "answeredRate": 1,
+    "citationPresenceRate": 1,
+    "citationAccuracyRate": 1,
+    "hallucinationRate": 0,
+    "avgLatencyMs": 1345.8,
+    "p95LatencyMs": 1463,
+    "totalQuestions": 5,
+    "timestamp": "2026-03-26T19:50:52.3082423+00:00"
+  },
+  "results": [
+    {
+      "question": "What is AcmeCloud?",
+      "actualResponse": "AcmeCloud is a cloud storage service that lets users upload, organize, and share files securely across devices [doc: faq.txt, chunk: faq-20260306191735-chunk-0].",
+      "answered": true,
+      "citationsPresent": true,
+      "citationAccurate": true,
+      "hallucinationDetected": false,
+      "latencyMs": 1662
+    },
+    {
+      "question": "What does AcmeCloud allow users to do?",
+      "actualResponse": "AcmeCloud allows users to upload, organize, and share files securely across devices.",
+      "answered": true,
+      "citationsPresent": true,
+      "citationAccurate": true,
+      "hallucinationDetected": false,
+      "latencyMs": 1045
+    },
+    {
+      "question": "How can I reset my password on AcmeCloud?",
+      "actualResponse": "To reset your password on AcmeCloud, go to Settings \u2192 Security \u2192 Reset Password. You will receive an email with a reset link that is valid for 15 minutes [doc: faq.txt, chunk: faq-20260306191735-chunk-0].",
+      "answered": true,
+      "citationsPresent": true,
+      "citationAccurate": true,
+      "hallucinationDetected": false,
+      "latencyMs": 1463
+    },
+    {
+      "question": "How long is the password reset link valid?",
+      "actualResponse": "The password reset link is valid for 15 minutes [doc: faq.txt, chunk: faq-20260306191735-chunk-0].",
+      "answered": true,
+      "citationsPresent": true,
+      "citationAccurate": true,
+      "hallucinationDetected": false,
+      "latencyMs": 1245
+    },
+    {
+      "question": "What file types does AcmeCloud support?",
+      "actualResponse": "AcmeCloud supports common file formats such as PDF, DOCX, JPG, PNG, MP4, and ZIP. Executable files (like .exe) are blocked.  [doc: faq.txt, chunk: faq-20260306191735-chunk-0]",
+      "answered": true,
+      "citationsPresent": true,
+      "citationAccurate": true,
+      "hallucinationDetected": false,
+      "latencyMs": 1314
+    }
+  ],
+  "runTimestamp": "2026-03-26T19:50:52.3082435+00:00",
+  "runDurationMs": 6731
+}

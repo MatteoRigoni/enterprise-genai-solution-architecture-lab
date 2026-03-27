@@ -1,4 +1,5 @@
 using AiSa.Application;
+using AiSa.Application.ToolCalling;
 using AiSa.Host;
 using AiSa.Host.Components;
 using AiSa.Host.Endpoints;
@@ -133,6 +134,13 @@ builder.Services.Configure<StreamingOptions>(
 builder.Services.Configure<SecurityOptions>(
     builder.Configuration.GetSection("Security"));
 builder.Services.AddSingleton<ISecurityService, SecurityService>();
+
+builder.Services.Configure<ToolCallingOptions>(
+    builder.Configuration.GetSection(ToolCallingOptions.SectionName));
+builder.Services.AddSingleton<IToolCallParser, ToolCallParser>();
+builder.Services.AddSingleton<IToolHandler, GetOrderStatusToolHandler>();
+builder.Services.AddSingleton<IToolHandler, CreateSupportTicketToolHandler>();
+builder.Services.AddSingleton<IToolRegistry, ToolRegistry>();
 
 // Rate limiting
 builder.Services.Configure<RateLimitingOptions>(
