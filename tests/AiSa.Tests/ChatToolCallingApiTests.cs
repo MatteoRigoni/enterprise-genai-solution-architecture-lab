@@ -4,7 +4,9 @@ using AiSa.Application;
 using AiSa.Application.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using AiSa.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AiSa.Tests;
 
@@ -29,7 +31,9 @@ public class ChatToolCallingApiTests : IClassFixture<WebApplicationFactory<AiSa.
             });
             builder.ConfigureServices(services =>
             {
-                services.Remove(services.FirstOrDefault(s => s.ServiceType == typeof(IRetrievalService))!);
+                services.RemoveAll<ILLMClient>();
+                services.AddScoped<ILLMClient, MockLLMClient>();
+                services.RemoveAll<IRetrievalService>();
                 services.AddScoped<IRetrievalService, MockRetrievalServiceWithResults>();
             });
         });
