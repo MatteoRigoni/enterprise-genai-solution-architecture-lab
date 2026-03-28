@@ -43,6 +43,26 @@
 - Normalizzazione nomi file
 - Limitazione lunghezza (max 255 caratteri)
 
+### Tool calling (allow-list and guardrails)
+
+**Scope (lab / T05)**:
+- Chat can optionally parse LLM-emitted `<tool_call>{...}</tool_call>` proposals and route only **allow-listed** tool names via `IToolRegistry`.
+- **Config** (see `appsettings` / environment):
+  - `ToolCalling:Enabled` — feature toggle (default off).
+  - `ToolCalling:MaxToolCallsPerRequest` — hard cap per chat turn.
+  - `ToolCalling:MaxToolOutputCharacters` — max length of tool output after redaction before returning to the user.
+
+**Mitigations**:
+| Control | Purpose |
+|---------|---------|
+| Allow-list (`IToolRegistry`) | Unknown or disallowed tool names are rejected; handlers never run. |
+| Per-tool input validation (`IToolInputValidator`) | Schema, length, and allowed-character rules; invalid args never reach handlers. |
+| Output sanitization | Truncation and pattern redaction on tool outputs before user-visible response. |
+| Metadata-only audit | Structured `ToolProposalAudit` logs: tool name, args hash (SHA-256 of canonical JSON), outcome, correlation id; optional sanitized length / redaction counts for executed tools — **no** raw prompts, args, or tool outputs in logs. |
+| Injection regression tests | `ToolInjectionTests` (integration) exercise blocked tools, bad args, and oversized output under the mock LLM. |
+
+**Residual risk**: Real models may emit malformed or adversarial markup; reliance on prompt instructions plus server-side validation remains the primary defense.
+
 ### Rate Limiting
 
 **Implementation**:

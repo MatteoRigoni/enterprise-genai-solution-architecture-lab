@@ -1,5 +1,6 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Microsoft.Extensions.Options
+@using AiSa.Application.ToolCalling
 @using AiSa.Infrastructure
 @implements IDialogContentComponent<object>
 
@@ -11,6 +12,10 @@
             <span class="admin-label">Vector store provider</span>
             <span class="admin-value">@_providerName</span>
         </p>
+        <p class="admin-row text-body">
+            <span class="admin-label">Tool calling</span>
+            <span class="admin-value">@_toolCallingStatus</span>
+        </p>
     </section>
 </div>
 
@@ -18,21 +23,32 @@
     [Inject]
     private IOptions<VectorStoreOptions> VectorStoreOptions { get; set; } = null!;
 
+    [Inject]
+    private IOptions<ToolCallingOptions> ToolCallingOptions { get; set; } = null!;
+
     private string _providerName = "";
+    private string _toolCallingStatus = "";
 
     protected override void OnInitialized()
     {
-        _providerName = VectorStoreOptions?.Value?.Provider?.Trim() ?? "AzureSearch";
-        if (string.IsNullOrEmpty(_providerName)) _providerName = "AzureSearch";
+        RefreshFromOptions();
     }
 
     public object Content { get; set; } = new();
 
     public Task OnDialogOpenAsync(DialogParameters parameters)
     {
+        RefreshFromOptions();
+        return Task.CompletedTask;
+    }
+
+    private void RefreshFromOptions()
+    {
         _providerName = VectorStoreOptions?.Value?.Provider?.Trim() ?? "AzureSearch";
         if (string.IsNullOrEmpty(_providerName)) _providerName = "AzureSearch";
-        return Task.CompletedTask;
+
+        var tc = ToolCallingOptions?.Value;
+        _toolCallingStatus = tc?.Enabled == true ? "enabled" : "disabled";
     }
 
     public Task<DialogResult> OnDialogCloseAsync()
