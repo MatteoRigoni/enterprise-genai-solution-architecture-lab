@@ -157,6 +157,127 @@
     background: transparent !important;
 }
 
+/* Optional badge row below hero title (e.g. MCP Integration) */
+.hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-bottom: var(--s-2);
+}
+
+/* Page section title + trailing actions (toolbar pattern) */
+.page-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--s-3);
+    gap: var(--s-2);
+}
+
+.page-section-header .text-section {
+    margin: 0;
+}
+
+/* Primary action aligned to end of section header / toolbars */
+.btn-toolbar-end {
+    flex-shrink: 0;
+}
+
+/* Icon-only stealth remove (documents file row, theme-aware) */
+.btn-icon-stealth-remove {
+    flex-shrink: 0;
+    margin-left: auto;
+    --neutral-fill-stealth-rest: transparent !important;
+    --neutral-fill-stealth-hover: transparent !important;
+    --neutral-fill-stealth-active: transparent !important;
+    --accent-fill-rest: var(--text-2) !important;
+    color: var(--text-2) !important;
+    padding: 0 !important;
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-stealth-remove ::deep .control {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.btn-icon-stealth-remove ::deep fluent-icon,
+.btn-icon-stealth-remove ::deep svg {
+    color: var(--text-2) !important;
+    fill: var(--text-2) !important;
+    transition: color 150ms ease-out, fill 150ms ease-out, transform 120ms ease-out;
+}
+
+.btn-icon-stealth-remove:hover {
+    --accent-fill-rest: var(--danger-0) !important;
+}
+
+.btn-icon-stealth-remove:hover ::deep fluent-icon,
+.btn-icon-stealth-remove:hover ::deep svg {
+    color: var(--danger-0) !important;
+    fill: var(--danger-0) !important;
+    transform: scale(1.05);
+}
+
+.btn-icon-stealth-remove:active ::deep fluent-icon,
+.btn-icon-stealth-remove:active ::deep svg {
+    transform: scale(0.97);
+}
+
+/* Outlined primary CTA (upload/ingest): distinct from default Accent fill */
+.btn-outlined-primary {
+    min-width: 160px;
+}
+
+.btn-outlined-primary ::deep .control {
+    background-color: transparent !important;
+    border-radius: var(--r-2) !important;
+    border: 1px solid var(--border-0) !important;
+    padding: var(--s-2) var(--s-4) !important;
+    box-shadow: none !important;
+    color: var(--text-0) !important;
+    font-weight: 500;
+    transition: background-color 150ms ease-out,
+                border-color 150ms ease-out,
+                transform 120ms ease-out;
+}
+
+.btn-outlined-primary ::deep fluent-icon {
+    color: var(--accent-primary) !important;
+}
+
+.btn-outlined-primary:hover ::deep .control {
+    background-color: var(--accent-primary-alpha) !important;
+    border-color: var(--accent-primary) !important;
+    transform: translateY(-1px);
+}
+
+.btn-outlined-primary:active ::deep .control {
+    transform: translateY(0);
+}
+
+.btn-outlined-primary[disabled] ::deep .control {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: transparent !important;
+    border-color: var(--border-0) !important;
+    transform: none;
+}
+
+@media (max-width: 768px) {
+    .page-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 /* Dashboard Sections */
 .dashboard-section {
     margin-bottom: var(--s-5);

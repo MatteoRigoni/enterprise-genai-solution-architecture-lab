@@ -5,28 +5,50 @@
 <PageTitle>MCP Integration</PageTitle>
 
 <div class="page-content">
-    <div class="surface-hero">
-        <div class="hero-header">
-            <h1 class="text-title text-title-gradient">MCP Integration Showcase</h1>
-            <FluentBadge Appearance="Appearance.Accent" Color="Color.Success">Documentation first</FluentBadge>
+    @if (!heroDismissed)
+    {
+        <div class="surface-hero">
+            <div class="hero-header">
+                <h1 class="text-title text-title-gradient">MCP Integration Showcase</h1>
+                <FluentButton Appearance="Appearance.Stealth"
+                             OnClick="DismissHero"
+                             Title="Dismiss"
+                             class="hero-dismiss-button">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
+                </FluentButton>
+            </div>
+            <div class="hero-badges">
+                <FluentBadge Appearance="Appearance.Accent" Color="Color.Success">Documentation first</FluentBadge>
+            </div>
+            <p class="text-body">
+                This chapter defines an end-to-end MCP orchestration scenario for enterprise chat: discovery, policy gate,
+                confirmation flow, app-scoped execution, and auditable outcomes.
+            </p>
         </div>
-        <p class="text-body">
-            This chapter defines an end-to-end MCP orchestration scenario for enterprise chat: discovery, policy gate,
-            confirmation flow, app-scoped execution, and auditable outcomes.
-        </p>
-    </div>
+    }
 
-    <div class="surface-card" style="margin-top:1rem;">
-        <h2>What this section includes</h2>
-        <ul>
-            <li>New ADR for MCP orchestrator boundaries and approval gate decisions</li>
-            <li>New backlog ticket and implementation plan (documentation-only scope)</li>
-            <li>Blueprint for integrating MCP/tooling into the existing Chat + RAG experience (with MCP toggle)</li>
-            <li>Lightweight auth baseline (utente abilitato/non abilitato per MCP server)</li>
-            <li>Two sample app providers (Ticketing + Messaging) for recruiter-facing demos</li>
-        </ul>
-        <p>
-            Start from <code>docs/mcp-integration-showcase.md</code> and the linked ADR/backlog entries.
-        </p>
+    <div class="dashboard-section">
+        <div class="surface-card">
+            <h2 class="text-section spacing-group">What this section includes</h2>
+            <ul>
+                <li>New ADR for MCP orchestrator boundaries and approval gate decisions</li>
+                <li>New backlog ticket and implementation plan (documentation-only scope)</li>
+                <li>Blueprint for integrating MCP/tooling into the existing Chat + RAG experience (with MCP toggle)</li>
+                <li>Lightweight auth baseline (utente abilitato/non abilitato per MCP server)</li>
+                <li>Two sample app providers (Ticketing + Messaging) for recruiter-facing demos</li>
+            </ul>
+            <p class="text-body">
+                Start from <code>docs/mcp-integration-showcase.md</code> and the linked ADR/backlog entries.
+            </p>
+        </div>
     </div>
 </div>
+
+@code {
+    private bool heroDismissed = false;
+
+    private void DismissHero()
+    {
+        heroDismissed = true;
+    }
+}

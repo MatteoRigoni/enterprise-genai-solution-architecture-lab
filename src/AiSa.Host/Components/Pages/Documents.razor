@@ -93,7 +93,7 @@
                                        OnClick="ClearSelectedFile"
                                        IconStart="@(new Icons.Regular.Size16.Dismiss())"
                                        Title="Remove"
-                                       class="remove-file-button">
+                                       class="btn-icon-stealth-remove">
                             </FluentButton>
                         </div>
                     }
@@ -105,16 +105,10 @@
                     <FluentButton Appearance="Appearance.Accent"
                                  OnClick="HandleUpload"
                                  disabled="@isUploading"
+                                 Loading="@isUploading"
                                  IconStart="@(new Icons.Regular.Size16.ArrowUpload())"
-                                 class="upload-submit-button">
-                        @if (isUploading)
-                        {
-                            <span style="margin-left: var(--s-2);">Uploading...</span>
-                        }
-                        else
-                        {
-                            <span>Upload & Ingest</span>
-                        }
+                                 class="btn-outlined-primary">
+                        Upload & Ingest
                     </FluentButton>
                 </div>
             }
@@ -123,22 +117,16 @@
 
     <!-- Documents List Section -->
     <div class="dashboard-section">
-        <div class="section-header">
+        <div class="page-section-header">
             <h2 class="text-section">Documents</h2>
             <FluentButton Appearance="Appearance.Accent"
                          OnClick="RefreshDocuments"
                          disabled="@isRefreshing"
+                         Loading="@isRefreshing"
                          IconStart="@(new Icons.Regular.Size16.ArrowSync())"
                          Title="Refresh"
-                         class="refresh-button">
-                @if (isRefreshing)
-                {
-                    <FluentProgressRing Size="Size.Small" />
-                }
-                else
-                {
-                    <span>Refresh</span>
-                }
+                         class="btn-toolbar-end">
+                Refresh
             </FluentButton>
         </div>
 

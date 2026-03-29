@@ -106,6 +106,7 @@
                 <FluentButton Appearance="Appearance.Accent" 
                               OnClick="HandleSend"
                               disabled="@(string.IsNullOrWhiteSpace(currentMessage) || isSending)"
+                              Loading="@isSending"
                               class="chat-send-button"
                               IconStart="@(new Icons.Regular.Size16.Send())"
                               Title="Send message">
