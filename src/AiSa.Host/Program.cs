@@ -6,6 +6,7 @@ using AiSa.Host.Endpoints;
 using AiSa.Host.Handlers;
 using AiSa.Host.Middleware;
 using AiSa.Host.Services;
+using AiSa.Host.Telemetry;
 using AiSa.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -228,6 +229,9 @@ builder.Services.AddSingleton<IDocumentMetadataStore, PostgresDocumentMetadataSt
 
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));
+
+// OpenTelemetry chat metrics (/api/chat, /api/chat/stream)
+builder.Services.AddSingleton<ChatMetrics>();
 
 // Eval metrics service
 builder.Services.AddSingleton<AiSa.Application.Eval.IEvalService, AiSa.Application.Eval.EvalService>();
