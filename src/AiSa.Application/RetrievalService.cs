@@ -41,6 +41,7 @@ public class RetrievalService : IRetrievalService
         using var activity = _activitySource.StartActivity("retrieval.query", ActivityKind.Internal);
         activity?.SetTag("retrieval.query.length", query.Length);
         activity?.SetTag("retrieval.topK", topK);
+        activity?.SetTag("top_k", topK);
 
         try
         {
@@ -63,6 +64,7 @@ public class RetrievalService : IRetrievalService
                 activity?.SetStatus(ActivityStatusCode.Error);
                 activity?.SetTag("error.type", "EmbeddingServiceUnavailable");
                 activity?.SetTag("fallback.used", true);
+                activity?.SetTag("retrieval.outcome", "degraded_empty");
                 
                 _logger.LogWarning(
                     "Embedding service unavailable (circuit breaker or timeout). Returning empty results. QueryLength: {QueryLength}",
@@ -76,6 +78,7 @@ public class RetrievalService : IRetrievalService
                 activity?.SetStatus(ActivityStatusCode.Error);
                 activity?.SetTag("error.type", "EmbeddingTimeout");
                 activity?.SetTag("fallback.used", true);
+                activity?.SetTag("retrieval.outcome", "degraded_empty");
                 
                 _logger.LogWarning(
                     "Embedding service timeout. Returning empty results. QueryLength: {QueryLength}",
@@ -90,6 +93,7 @@ public class RetrievalService : IRetrievalService
 
             // Log metadata only (ADR-0004: no raw content, only metadata)
             activity?.SetTag("retrieval.resultCount", resultsList.Count);
+            activity?.SetTag("retrieval.outcome", resultsList.Count > 0 ? "ok" : "empty");
             if (resultsList.Any())
             {
                 activity?.SetTag("retrieval.topScore", resultsList.First().Score);
@@ -114,7 +118,7 @@ public class RetrievalService : IRetrievalService
         {
             activity?.SetStatus(ActivityStatusCode.Error);
             activity?.SetTag("error.type", ex.GetType().Name);
-            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("retrieval.outcome", "error");
 
             _logger.LogError(
                 ex,

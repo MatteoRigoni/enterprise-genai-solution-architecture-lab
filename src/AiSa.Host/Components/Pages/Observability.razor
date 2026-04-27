@@ -1,33 +1,128 @@
 @page "/observability"
+@implements IDisposable
 @using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 @using Microsoft.FluentUI.AspNetCore.Components
+@using AiSa.Host.Services
+@using AiSa.Application.Observability
+@inject IApiCallStore ApiCallStore
+@inject IUiSession UiSession
+@inject InMemorySecurityEventRecorder SecurityEvents
 
 <PageTitle>Observability</PageTitle>
 
 <div class="page-content">
-    @if (!heroDismissed)
-    {
-        <div class="surface-hero">
-            <div class="hero-header">
-                <h1 class="text-title text-title-gradient">Observability</h1>
-                <FluentButton Appearance="Appearance.Stealth"
-                             OnClick="DismissHero"
-                             Title="Dismiss"
-                             class="hero-dismiss-button">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
-                </FluentButton>
-            </div>
-            <p class="text-body">Coming soon - Observability dashboard and traces interface will be implemented here.</p>
+    <div class="surface-hero">
+        <div class="hero-header">
+            <h1 class="text-title text-title-gradient">Observability</h1>
         </div>
-    }
+        <p class="text-body">
+            This page shows <strong>metadata-only</strong> request summaries (no prompts, no documents, no tool args).
+            For traces & metrics, use the Aspire Dashboard (local dev) or Azure Monitor (prod).
+        </p>
+    </div>
+
+    <div class="surface-panel">
+        <h2 class="text-subtitle">Recent API calls (this UI session)</h2>
+        @if (recentCalls.Count == 0)
+        {
+            <p class="text-body">No calls recorded yet. Make a few chat requests.</p>
+        }
+        else
+        {
+            <table class="simple-table">
+                <thead>
+                <tr>
+                    <th>Time (UTC)</th>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Latency (ms)</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var c in recentCalls)
+                {
+                    <tr>
+                        <td>@c.Timestamp.UtcDateTime.ToString("HH:mm:ss")</td>
+                        <td>@c.Method</td>
+                        <td>@c.Path</td>
+                        <td>@(c.StatusCode == 0 ? "exception" : c.StatusCode.ToString())</td>
+                        <td>@c.DurationMs</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="surface-panel">
+        <h2 class="text-subtitle">Security events (recent)</h2>
+        @if (recentSecurityEvents.Count == 0)
+        {
+            <p class="text-body">No security events recorded in this process.</p>
+        }
+        else
+        {
+            <table class="simple-table">
+                <thead>
+                <tr>
+                    <th>Time (UTC)</th>
+                    <th>Reason</th>
+                    <th>CorrelationId</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var e in recentSecurityEvents)
+                {
+                    <tr>
+                        <td>@e.Timestamp.UtcDateTime.ToString("HH:mm:ss")</td>
+                        <td>@e.Reason</td>
+                        <td class="mono">@((string.IsNullOrWhiteSpace(e.CorrelationId) ? "n/a" : e.CorrelationId))</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="surface-panel">
+        <h2 class="text-subtitle">Runbooks</h2>
+        <ul class="runbook-list">
+            <li><a href="/runbooks/incident-latency" target="_blank" rel="noreferrer">Latency incident</a></li>
+            <li><a href="/runbooks/incident-cost-spike" target="_blank" rel="noreferrer">Cost spike incident</a></li>
+            <li><a href="/runbooks/incident-llm-degradation" target="_blank" rel="noreferrer">LLM degradation incident</a></li>
+        </ul>
+    </div>
 </div>
 
 @code {
-    private bool heroDismissed = false;
+    private IReadOnlyList<ApiCallRecord> recentCalls = Array.Empty<ApiCallRecord>();
+    private IReadOnlyList<SecurityEventRecord> recentSecurityEvents = Array.Empty<SecurityEventRecord>();
 
-    private void DismissHero()
+    protected override void OnInitialized()
     {
-        heroDismissed = true;
+        Refresh();
+        ApiCallStore.ApiCallRecorded += OnApiCallRecorded;
+    }
+
+    private void OnApiCallRecorded(object? sender, ApiCallRecordedEventArgs e)
+    {
+        if (!string.Equals(e.SessionId, UiSession.SessionId, StringComparison.Ordinal))
+            return;
+
+        Refresh();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Refresh()
+    {
+        recentCalls = ApiCallStore.GetRecentCalls(UiSession.SessionId, count: 10);
+        recentSecurityEvents = SecurityEvents.GetRecent(count: 20);
+    }
+
+    public void Dispose()
+    {
+        ApiCallStore.ApiCallRecorded -= OnApiCallRecorded;
     }
 }
 

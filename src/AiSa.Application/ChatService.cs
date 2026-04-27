@@ -3,6 +3,9 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using AiSa.Application.Models;
+using AiSa.Application.FinOps;
+using AiSa.Application.Observability;
+using AiSa.Application.Telemetry;
 using AiSa.Application.ToolCalling;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,6 +28,9 @@ public class ChatService : IChatService
     private readonly IToolRegistry _toolRegistry;
     private readonly IToolInputValidatorRegistry _toolInputValidatorRegistry;
     private readonly IToolOutputSanitizer _toolOutputSanitizer;
+    private readonly GenAiMetrics _genAiMetrics;
+    private readonly IOptions<FinOpsPricingOptions> _pricingOptions;
+    private readonly ISecurityEventRecorder _securityEventRecorder;
 
     public ChatService(
         ILLMClient llmClient,
@@ -37,7 +43,10 @@ public class ChatService : IChatService
         IToolCallParser toolCallParser,
         IToolRegistry toolRegistry,
         IToolInputValidatorRegistry toolInputValidatorRegistry,
-        IToolOutputSanitizer toolOutputSanitizer)
+        IToolOutputSanitizer toolOutputSanitizer,
+        GenAiMetrics genAiMetrics,
+        IOptions<FinOpsPricingOptions> pricingOptions,
+        ISecurityEventRecorder securityEventRecorder)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         _retrievalService = retrievalService ?? throw new ArgumentNullException(nameof(retrievalService));
@@ -50,6 +59,9 @@ public class ChatService : IChatService
         _toolRegistry = toolRegistry ?? throw new ArgumentNullException(nameof(toolRegistry));
         _toolInputValidatorRegistry = toolInputValidatorRegistry ?? throw new ArgumentNullException(nameof(toolInputValidatorRegistry));
         _toolOutputSanitizer = toolOutputSanitizer ?? throw new ArgumentNullException(nameof(toolOutputSanitizer));
+        _genAiMetrics = genAiMetrics ?? throw new ArgumentNullException(nameof(genAiMetrics));
+        _pricingOptions = pricingOptions ?? throw new ArgumentNullException(nameof(pricingOptions));
+        _securityEventRecorder = securityEventRecorder ?? throw new ArgumentNullException(nameof(securityEventRecorder));
     }
 
     public async Task<ChatResponse> ProcessChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -61,6 +73,8 @@ public class ChatService : IChatService
         var validationResult = _securityService.ValidateInput(request.Message);
         if (!validationResult.IsValid)
         {
+            _genAiMetrics.RecordSecurityEvent("input_rejected");
+            _securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "input_rejected", Activity.Current?.GetBaggageItem("correlation.id") ?? Activity.Current?.Id));
             throw new ArgumentException(validationResult.RejectionReason ?? "Input validation failed", nameof(request));
         }
         var sanitizedMessage = validationResult.SanitizedInput ?? request.Message;
@@ -148,61 +162,70 @@ public class ChatService : IChatService
             prompt.Length,
             correlationId);
 
-        // Step 4: Generate LLM response with context
-        using var activity = _activitySource.StartActivity("llm.generate", ActivityKind.Internal);
-        activity?.SetTag("llm.prompt.length", prompt.Length);
-        activity?.SetTag("llm.context.chunkCount", resultsList.Count);
-
+        // Step 4: Generate LLM response with context (span ends before tool execution)
         string responseText;
-        try
         {
-            var response = await _llmClient.GenerateAsync(prompt, cancellationToken);
-            responseText = response ?? string.Empty;
-        }
-        catch (HttpRequestException ex) when (ex.Message.Contains("circuit", StringComparison.OrdinalIgnoreCase) || 
-                                              ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
-        {
-            // Fallback when Azure OpenAI is unavailable
-            activity?.SetStatus(ActivityStatusCode.Error);
-            activity?.SetTag("error.type", "CircuitBreakerOrTimeout");
-            activity?.SetTag("fallback.used", true);
-            
-            _logger.LogWarning(
-                "LLM service unavailable (circuit breaker or timeout). Returning fallback response. CorrelationId: {CorrelationId}, Error: {ErrorType}",
-                correlationId,
-                ex.GetType().Name);
-            
-            return new ChatResponse
+            using var llmActivity = _activitySource.StartActivity("llm.generate", ActivityKind.Internal);
+            llmActivity?.SetTag("gen_ai.request.model", _llmClient.TelemetryModelId);
+            llmActivity?.SetTag("llm.prompt.length", prompt.Length);
+            llmActivity?.SetTag("llm.context.chunkCount", resultsList.Count);
+
+            try
             {
-                Response = "I'm temporarily unable to process requests. Please try again later.",
-                CorrelationId = correlationId,
-                MessageId = Guid.NewGuid().ToString(),
-                Citations = citations // Still return citations even if LLM failed
-            };
-        }
-        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
-        {
-            // Fallback when LLM times out
-            activity?.SetStatus(ActivityStatusCode.Error);
-            activity?.SetTag("error.type", "Timeout");
-            activity?.SetTag("fallback.used", true);
-            
-            _logger.LogWarning(
-                "LLM service timeout. Returning fallback response. CorrelationId: {CorrelationId}",
-                correlationId);
-            
-            return new ChatResponse
+                var response = await _llmClient.GenerateAsync(prompt, cancellationToken);
+                responseText = response ?? string.Empty;
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("circuit", StringComparison.OrdinalIgnoreCase) ||
+                                                  ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
             {
-                Response = "I'm temporarily unable to process requests. Please try again later.",
-                CorrelationId = correlationId,
-                MessageId = Guid.NewGuid().ToString(),
-                Citations = citations
-            };
+                llmActivity?.SetStatus(ActivityStatusCode.Error);
+                llmActivity?.SetTag("error.type", "CircuitBreakerOrTimeout");
+                llmActivity?.SetTag("fallback.used", true);
+
+                _logger.LogWarning(
+                    "LLM service unavailable (circuit breaker or timeout). Returning fallback response. CorrelationId: {CorrelationId}, Error: {ErrorType}",
+                    correlationId,
+                    ex.GetType().Name);
+
+                return new ChatResponse
+                {
+                    Response = "I'm temporarily unable to process requests. Please try again later.",
+                    CorrelationId = correlationId,
+                    MessageId = Guid.NewGuid().ToString(),
+                    Citations = citations
+                };
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                llmActivity?.SetStatus(ActivityStatusCode.Error);
+                llmActivity?.SetTag("error.type", "Timeout");
+                llmActivity?.SetTag("fallback.used", true);
+
+                _logger.LogWarning(
+                    "LLM service timeout. Returning fallback response. CorrelationId: {CorrelationId}",
+                    correlationId);
+
+                return new ChatResponse
+                {
+                    Response = "I'm temporarily unable to process requests. Please try again later.",
+                    CorrelationId = correlationId,
+                    MessageId = Guid.NewGuid().ToString(),
+                    Citations = citations
+                };
+            }
+
+            llmActivity?.SetTag("llm.response.length", responseText.Length);
+            llmActivity?.SetStatus(ActivityStatusCode.Ok);
         }
 
-        var responseLength = responseText.Length;
-        activity?.SetTag("llm.response.length", responseLength);
-        activity?.SetStatus(ActivityStatusCode.Ok);
+        // Record estimated tokens + estimated cost (low-cardinality tags only)
+        var pricing = _pricingOptions.Value ?? new FinOpsPricingOptions();
+        var tokensIn = EstimateTokensFromChars(prompt.Length, pricing.CharsPerToken);
+        var tokensOut = EstimateTokensFromChars(responseText.Length, pricing.CharsPerToken);
+        var estimatedCostEur =
+            (tokensIn / 1000.0) * pricing.InputEurPer1KTokens +
+            (tokensOut / 1000.0) * pricing.OutputEurPer1KTokens;
+        _genAiMetrics.RecordEstimatedUsage(feature: "chat", modelId: _llmClient.TelemetryModelId, tokensIn: tokensIn, tokensOut: tokensOut, estimatedCostEur: estimatedCostEur);
 
         if (toolCallingEnabled
             && _toolCallParser.TryParse(responseText, out var proposal)
@@ -227,6 +250,8 @@ public class ChatService : IChatService
                 _logger.LogWarning("Tool call blocked by MaxToolCallsPerRequest. CorrelationId: {CorrelationId}",
                     correlationId);
                 Audit(ToolProposalAuditOutcome.BlockedByConfig);
+                _genAiMetrics.RecordSecurityEvent("tool_blocked_config");
+                _securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "tool_blocked_config", correlationId));
                 responseText = "Tool execution is disabled by configuration.";
             }
             else if (!_toolRegistry.TryGetHandler(proposal.Name, out var handler) || handler == null)
@@ -236,6 +261,8 @@ public class ChatService : IChatService
                     proposal.Name,
                     correlationId);
                 Audit(ToolProposalAuditOutcome.BlockedNotAllowlisted);
+                _genAiMetrics.RecordSecurityEvent("tool_blocked_not_allowlisted");
+                _securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "tool_blocked_not_allowlisted", correlationId));
                 responseText = "That tool is not available.";
             }
             else if (!_toolInputValidatorRegistry.TryGetValidator(proposal.Name, out var inputValidator) ||
@@ -246,6 +273,8 @@ public class ChatService : IChatService
                     proposal.Name,
                     correlationId);
                 Audit(ToolProposalAuditOutcome.BlockedNoValidator);
+                _genAiMetrics.RecordSecurityEvent("tool_blocked_no_validator");
+                _securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "tool_blocked_no_validator", correlationId));
                 responseText = "That tool is not available.";
             }
             else
@@ -258,16 +287,24 @@ public class ChatService : IChatService
                         proposal.Name,
                         correlationId);
                     Audit(ToolProposalAuditOutcome.ValidationFailed);
+                    _genAiMetrics.RecordSecurityEvent("tool_input_validation_failed");
+                    _securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "tool_input_validation_failed", correlationId));
                     responseText = validation.UserSafeMessage ?? "Request could not be processed.";
                 }
                 else
                 {
-                    activity?.SetTag("tool.name", proposal.Name);
+                    using var toolActivity = _activitySource.StartActivity("tool.execute", ActivityKind.Internal);
+                    toolActivity?.SetTag("tool.name", proposal.Name);
+                    toolActivity?.SetTag("tool.args.hash_prefix", argsHash.Length >= 12 ? argsHash[..12] : argsHash);
+
                     try
                     {
                         var rawToolOutput = await handler.ExecuteAsync(proposal, cancellationToken);
                         var sanitized = _toolOutputSanitizer.Sanitize(rawToolOutput);
                         responseText = sanitized.Text;
+                        toolActivity?.SetTag("tool.output.length", sanitized.Text.Length);
+                        toolActivity?.SetTag("tool.sanitizer.redaction_count", sanitized.RedactionCount);
+                        toolActivity?.SetStatus(ActivityStatusCode.Ok);
                         Audit(ToolProposalAuditOutcome.Executed, sanitized.Text.Length, sanitized.RedactionCount);
                     }
                     catch (OperationCanceledException)
@@ -276,6 +313,10 @@ public class ChatService : IChatService
                     }
                     catch (Exception ex)
                     {
+                        toolActivity?.SetStatus(ActivityStatusCode.Error);
+                        toolActivity?.SetTag("error.type", ex.GetType().Name);
+                        _genAiMetrics.RecordSecurityEvent("tool_error");
+                        _securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "tool_error", correlationId));
                         _logger.LogWarning(
                             "Tool execution failed. ToolName: {ToolName}, CorrelationId: {CorrelationId}, ErrorType: {ErrorType}",
                             proposal.Name,
@@ -358,5 +399,12 @@ public class ChatService : IChatService
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(prompt));
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
+    }
+
+    private static long EstimateTokensFromChars(int charCount, double charsPerToken)
+    {
+        if (charCount <= 0) return 0;
+        if (charsPerToken <= 0) charsPerToken = 4.0;
+        return (long)Math.Ceiling(charCount / charsPerToken);
     }
 }
