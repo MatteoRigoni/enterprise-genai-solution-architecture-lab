@@ -20,6 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Bicep compile (infra)
+        run: |
+          set -e
+          az bicep version >/dev/null 2>&1 || az bicep install
+          az bicep build --file infra/bicep/main.bicep
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
