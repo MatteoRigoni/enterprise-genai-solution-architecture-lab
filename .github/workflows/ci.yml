@@ -55,7 +55,8 @@ jobs:
           ASPNETCORE_ENVIRONMENT: Production
           ASPNETCORE_URLS: http://127.0.0.1:5057
         run: |
-          dotnet run --project src/AiSa.Host/AiSa.Host.csproj -c Release --no-build &
+          # launchSettings.json defaults to localhost:5069 + Development; CI needs ASPNETCORE_URLS + Production.
+          dotnet run --project src/AiSa.Host/AiSa.Host.csproj -c Release --no-build --no-launch-profile &
           echo $! > /tmp/aisa-host.pid
           for i in $(seq 1 90); do
             if curl -fsS -o /dev/null http://127.0.0.1:5057/ 2>/dev/null; then
