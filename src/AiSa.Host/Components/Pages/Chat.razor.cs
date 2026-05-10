@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using AiSa.Application;
 using AiSa.Application.Models;
-using AiSa.Host.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
@@ -19,9 +18,6 @@ public partial class Chat
 
     [Inject]
     private HttpClient Http { get; set; } = default!;
-
-    [Inject]
-    private ILoadingService LoadingService { get; set; } = default!;
 
     [Inject]
     private ILogger<Chat> Logger { get; set; } = default!;
@@ -50,47 +46,36 @@ public partial class Chat
         isSending = true;
         StateHasChanged(); // Force UI update to clear the input field immediately
 
-        // Use centralized loading service with a specific key for chat operations
-        await LoadingService.ExecuteWithLoadingAsync(async cancellationToken =>
+        try
         {
-            try
-            {
-                // Check if streaming is enabled via configuration
-                var useStreaming = StreamingOptions.Value.Enabled;
+            var useStreaming = StreamingOptions.Value.Enabled;
 
-                if (useStreaming)
-                {
-                    Logger.LogDebug("Using streaming chat endpoint");
-                    await HandleStreamingChat(messageToSend, cancellationToken);
-                }
-                else
-                {
-                    Logger.LogDebug("Using non-streaming chat endpoint (cache enabled)");
-                    await HandleNonStreamingChat(messageToSend, cancellationToken);
-                }
-            }
-            catch (HttpRequestException ex)
+            if (useStreaming)
             {
-                // Log technical details internally
-                Logger.LogError(ex, "Network error while sending chat message. Message: {Message}", ex.Message);
-                
-                // Show user-friendly message only
-                errorMessage = "Network error. Please check your connection and try again.";
+                Logger.LogDebug("Using streaming chat endpoint");
+                await HandleStreamingChat(messageToSend, CancellationToken.None);
             }
-            catch (Exception ex)
+            else
             {
-                // Log technical details internally
-                Logger.LogError(ex, "Unexpected error while sending chat message. ExceptionType: {ExceptionType}, Message: {Message}", 
-                    ex.GetType().Name, ex.Message);
-                
-                // Show user-friendly message only
-                errorMessage = "An unexpected error occurred. Please try again later.";
+                Logger.LogDebug("Using non-streaming chat endpoint (cache enabled)");
+                await HandleNonStreamingChat(messageToSend, CancellationToken.None);
             }
-            finally
-            {
-                isSending = false;
-            }
-        }, key: "chat-send");
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Network error while sending chat message. Message: {Message}", ex.Message);
+            errorMessage = "Network error. Please check your connection and try again.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while sending chat message. ExceptionType: {ExceptionType}, Message: {Message}",
+                ex.GetType().Name, ex.Message);
+            errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+        finally
+        {
+            isSending = false;
+        }
     }
 
     private void DismissHero()

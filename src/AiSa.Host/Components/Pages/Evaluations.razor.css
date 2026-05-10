@@ -1,32 +1,10 @@
 /* Evaluations Page */
 
-/* Run Eval Section */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--s-2);
-}
-
-.run-eval-button {
-    flex-shrink: 0;
-}
-
-.button-inner {
-    display: flex;
-    align-items: center;
-    gap: var(--s-2);
-}
-
-.icon-spin {
-    display: inline-flex;
-    animation: spin 1s linear infinite;
-    transform-origin: center;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+/* Matches chat/documents: loading overlay + dimmed, non-interactive section while busy */
+.eval-run-section-busy {
+    opacity: 0.72;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
 }
 
 .eval-description {
@@ -223,12 +201,6 @@
 @media (max-width: 600px) {
     .metrics-grid {
         grid-template-columns: 1fr;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--s-2);
     }
 
     .report-meta {

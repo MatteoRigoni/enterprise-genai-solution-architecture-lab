@@ -5,7 +5,7 @@
 
 <PageTitle>Chat</PageTitle>
 
-<div class="page-content">
+<div class="page-content chat-page-content">
     @if (!heroDismissed)
     {
         <div class="surface-hero">
@@ -106,6 +106,7 @@
                 <FluentButton Appearance="Appearance.Accent" 
                               OnClick="HandleSend"
                               disabled="@(string.IsNullOrWhiteSpace(currentMessage) || isSending)"
+                              Loading="@isSending"
                               class="chat-send-button"
                               IconStart="@(new Icons.Regular.Size16.Send())"
                               Title="Send message">
@@ -113,6 +114,14 @@
                 </FluentButton>
             </div>
         </div>
+        @if (isSending)
+        {
+            <div class="chat-loading-overlay" aria-busy="true" aria-live="polite">
+                <div class="chat-loading-overlay-content">
+                    <FluentProgressRing />
+                </div>
+            </div>
+        }
         </div>
     </div>
 </div>

@@ -157,6 +157,127 @@
     background: transparent !important;
 }
 
+/* Optional badge row below hero title (e.g. MCP Integration) */
+.hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-bottom: var(--s-2);
+}
+
+/* Page section title + trailing actions (toolbar pattern) */
+.page-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--s-3);
+    gap: var(--s-2);
+}
+
+.page-section-header .text-section {
+    margin: 0;
+}
+
+/* Primary action aligned to end of section header / toolbars */
+.btn-toolbar-end {
+    flex-shrink: 0;
+}
+
+/* Icon-only stealth remove (documents file row, theme-aware) */
+.btn-icon-stealth-remove {
+    flex-shrink: 0;
+    margin-left: auto;
+    --neutral-fill-stealth-rest: transparent !important;
+    --neutral-fill-stealth-hover: transparent !important;
+    --neutral-fill-stealth-active: transparent !important;
+    --accent-fill-rest: var(--text-2) !important;
+    color: var(--text-2) !important;
+    padding: 0 !important;
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-stealth-remove ::deep .control {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.btn-icon-stealth-remove ::deep fluent-icon,
+.btn-icon-stealth-remove ::deep svg {
+    color: var(--text-2) !important;
+    fill: var(--text-2) !important;
+    transition: color 150ms ease-out, fill 150ms ease-out, transform 120ms ease-out;
+}
+
+.btn-icon-stealth-remove:hover {
+    --accent-fill-rest: var(--danger-0) !important;
+}
+
+.btn-icon-stealth-remove:hover ::deep fluent-icon,
+.btn-icon-stealth-remove:hover ::deep svg {
+    color: var(--danger-0) !important;
+    fill: var(--danger-0) !important;
+    transform: scale(1.05);
+}
+
+.btn-icon-stealth-remove:active ::deep fluent-icon,
+.btn-icon-stealth-remove:active ::deep svg {
+    transform: scale(0.97);
+}
+
+/* Outlined primary CTA (upload/ingest): distinct from default Accent fill */
+.btn-outlined-primary {
+    min-width: 160px;
+}
+
+.btn-outlined-primary ::deep .control {
+    background-color: transparent !important;
+    border-radius: var(--r-2) !important;
+    border: 1px solid var(--border-0) !important;
+    padding: var(--s-2) var(--s-4) !important;
+    box-shadow: none !important;
+    color: var(--text-0) !important;
+    font-weight: 500;
+    transition: background-color 150ms ease-out,
+                border-color 150ms ease-out,
+                transform 120ms ease-out;
+}
+
+.btn-outlined-primary ::deep fluent-icon {
+    color: var(--accent-primary) !important;
+}
+
+.btn-outlined-primary:hover ::deep .control {
+    background-color: var(--accent-primary-alpha) !important;
+    border-color: var(--accent-primary) !important;
+    transform: translateY(-1px);
+}
+
+.btn-outlined-primary:active ::deep .control {
+    transform: translateY(0);
+}
+
+.btn-outlined-primary[disabled] ::deep .control {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: transparent !important;
+    border-color: var(--border-0) !important;
+    transform: none;
+}
+
+@media (max-width: 768px) {
+    .page-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 /* Dashboard Sections */
 .dashboard-section {
     margin-bottom: var(--s-5);
@@ -884,7 +1005,196 @@ fluent-select[disabled] ::deep input {
     color: var(--text-2) !important;
 }
 
+/* --- Portal data tables (Observability, dashboard calls, etc.) --- */
+.portal-table-shell {
+    background-color: var(--bg-2);
+    border: 1px solid var(--border-0);
+    border-radius: var(--r-2);
+    padding: var(--s-3);
+    box-shadow: var(--shadow-1);
+    overflow-x: auto;
+}
 
+.portal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.portal-table thead {
+    border-bottom: 1px solid var(--border-0);
+}
+
+.portal-table th {
+    text-align: left;
+    padding: var(--s-2) var(--s-3);
+    font-weight: 600;
+    color: var(--text-2);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.portal-table th.table-num {
+    text-align: right;
+}
+
+.portal-table td {
+    padding: var(--s-2) var(--s-3);
+    color: var(--text-1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    vertical-align: middle;
+}
+
+html.theme-light .portal-table td {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.portal-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.portal-table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+html.theme-light .portal-table tbody tr:hover td {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.portal-table td.table-empty {
+    text-align: center;
+    color: var(--text-2);
+    padding: var(--s-4) !important;
+    font-style: italic;
+}
+
+.method-badge,
+.status-badge,
+.reason-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--r-1);
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    line-height: 1.2;
+}
+
+.method-badge {
+    background-color: rgba(91, 141, 239, 0.15);
+    color: var(--accent-primary);
+}
+
+.method-get {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.method-post {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.method-put {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: var(--warning-0);
+}
+
+.method-delete {
+    background-color: rgba(248, 113, 113, 0.15);
+    color: var(--danger-0);
+}
+
+.method-patch {
+    background-color: rgba(167, 139, 250, 0.18);
+    color: #a78bfa;
+}
+
+.status-badge {
+    font-weight: 600;
+}
+
+.status-success {
+    background-color: rgba(74, 222, 128, 0.15);
+    color: var(--success-0);
+}
+
+.status-warning {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: var(--warning-0);
+}
+
+.status-error {
+    background-color: rgba(248, 113, 113, 0.15);
+    color: var(--danger-0);
+}
+
+.status-info {
+    background-color: rgba(91, 141, 239, 0.15);
+    color: var(--accent-primary);
+}
+
+.table-path,
+.table-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8125rem;
+    color: var(--text-1);
+}
+
+.table-path {
+    max-width: 22rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table-time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--text-2);
+    font-size: 0.8125rem;
+}
+
+.table-num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.reason-badge {
+    background-color: rgba(251, 191, 36, 0.12);
+    color: var(--warning-0);
+    text-transform: none;
+    font-weight: 500;
+}
+
+.obs-runbook-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+}
+
+.obs-runbook-list a {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    border-radius: var(--r-1);
+    border: 1px solid var(--border-0);
+    background-color: var(--bg-2);
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.obs-runbook-list a:hover {
+    border-color: var(--border-1);
+    background-color: rgba(91, 141, 239, 0.08);
+}
 
 
 

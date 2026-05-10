@@ -139,57 +139,6 @@
     font-size: 0.875rem;
 }
 
-.remove-file-button {
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-/* Theme-aware icon-only remove button, aligned with hero/top-bar icon buttons */
-.remove-file-button {
-    --neutral-fill-stealth-rest: transparent !important;
-    --neutral-fill-stealth-hover: transparent !important;
-    --neutral-fill-stealth-active: transparent !important;
-    --accent-fill-rest: var(--text-2) !important;
-    color: var(--text-2) !important;
-    padding: 0 !important;
-    min-width: 32px !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.remove-file-button ::deep .control {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-}
-
-.remove-file-button ::deep fluent-icon,
-.remove-file-button ::deep svg {
-    color: var(--text-2) !important;
-    fill: var(--text-2) !important;
-    transition: color 150ms ease-out, fill 150ms ease-out, transform 120ms ease-out;
-}
-
-.remove-file-button:hover {
-    --accent-fill-rest: var(--danger-0) !important;
-}
-
-.remove-file-button:hover ::deep fluent-icon,
-.remove-file-button:hover ::deep svg {
-    color: var(--danger-0) !important;
-    fill: var(--danger-0) !important;
-    transform: scale(1.05);
-}
-
-.remove-file-button:active ::deep fluent-icon,
-.remove-file-button:active ::deep svg {
-    transform: scale(0.97);
-}
-
 .upload-actions {
     display: flex;
     justify-content: center;
@@ -198,58 +147,7 @@
     border-top: 1px solid var(--border-0);
 }
 
-.upload-submit-button {
-    min-width: 160px;
-}
-
-/* Minimal primary action button for Upload & Ingest */
-.upload-submit-button ::deep .control {
-    background-color: transparent !important;
-    border-radius: var(--r-2) !important;
-    border: 1px solid var(--border-0) !important;
-    padding: var(--s-2) var(--s-4) !important;
-    box-shadow: none !important;
-    color: var(--text-0) !important;
-    font-weight: 500;
-    transition: background-color 150ms ease-out,
-                border-color 150ms ease-out,
-                transform 120ms ease-out;
-}
-
-.upload-submit-button ::deep fluent-icon {
-    color: var(--accent-primary) !important;
-}
-
-.upload-submit-button:hover ::deep .control {
-    background-color: var(--accent-primary-alpha) !important;
-    border-color: var(--accent-primary) !important;
-    transform: translateY(-1px);
-}
-
-.upload-submit-button:active ::deep .control {
-    transform: translateY(0);
-}
-
-.upload-submit-button[disabled] ::deep .control {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background-color: transparent !important;
-    border-color: var(--border-0) !important;
-    transform: none;
-}
-
 /* Documents Table Section */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--s-3);
-}
-
-.refresh-button {
-    flex-shrink: 0;
-}
-
 .documents-table-card {
     padding: var(--s-4);
     overflow-x: auto;
@@ -428,12 +326,6 @@
 
     .upload-description {
         font-size: 0.875rem;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--s-2);
     }
 
     .documents-table-card {

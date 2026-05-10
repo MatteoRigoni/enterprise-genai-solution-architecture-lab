@@ -42,6 +42,9 @@ public class AzureOpenAILLMClient : ILLMClient
         _httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
     }
 
+    /// <inheritdoc />
+    public string TelemetryModelId => _deploymentName;
+
     public async Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(prompt))

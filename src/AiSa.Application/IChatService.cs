@@ -8,6 +8,11 @@ namespace AiSa.Application;
 public interface ILLMClient
 {
     /// <summary>
+    /// Deployment or model id for OpenTelemetry only (e.g. gen_ai.request.model). Never prompts or secrets.
+    /// </summary>
+    string TelemetryModelId { get; }
+
+    /// <summary>
     /// Generate a response from the LLM for the given prompt.
     /// </summary>
     /// <param name="prompt">User prompt.</param>

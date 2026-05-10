@@ -1,33 +1,191 @@
 @page "/observability"
-@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
-@using Microsoft.FluentUI.AspNetCore.Components
+@implements IDisposable
+@using AiSa.Host.Services
+@using AiSa.Application.Observability
+@inject IApiCallStore ApiCallStore
+@inject IUiSession UiSession
+@inject InMemorySecurityEventRecorder SecurityEvents
 
 <PageTitle>Observability</PageTitle>
 
 <div class="page-content">
-    @if (!heroDismissed)
-    {
-        <div class="surface-hero">
-            <div class="hero-header">
-                <h1 class="text-title text-title-gradient">Observability</h1>
-                <FluentButton Appearance="Appearance.Stealth"
-                             OnClick="DismissHero"
-                             Title="Dismiss"
-                             class="hero-dismiss-button">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
-                </FluentButton>
-            </div>
-            <p class="text-body">Coming soon - Observability dashboard and traces interface will be implemented here.</p>
+    <div class="surface-hero">
+        <div class="hero-header">
+            <h1 class="text-title text-title-gradient">Observability</h1>
         </div>
-    }
+        <p class="text-body">
+            This page shows <strong>metadata-only</strong> request summaries (no prompts, no documents, no tool args).
+            For traces &amp; metrics, use the Aspire Dashboard (local dev) or Azure Monitor (prod).
+        </p>
+    </div>
+
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Recent API calls (this UI session)</h2>
+        @if (recentCalls.Count == 0)
+        {
+            <div class="portal-table-shell">
+                <table class="portal-table" aria-label="Recent API calls">
+                    <thead>
+                    <tr>
+                        <th scope="col">Time (UTC)</th>
+                        <th scope="col">Method</th>
+                        <th scope="col">Path</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="table-num">Latency (ms)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td colspan="5" class="table-empty">No calls recorded yet. Make a few chat requests from this browser session.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="portal-table-shell">
+                <table class="portal-table" aria-label="Recent API calls">
+                    <thead>
+                    <tr>
+                        <th scope="col">Time (UTC)</th>
+                        <th scope="col">Method</th>
+                        <th scope="col">Path</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="table-num">Latency (ms)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var c in recentCalls)
+                    {
+                        <tr>
+                            <td class="table-time">@c.Timestamp.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td><span class="method-badge @MethodAccentClass(c.Method)">@c.Method</span></td>
+                            <td class="table-path" title="@c.Path">@c.Path</td>
+                            <td><span class="status-badge @StatusAccentClass(c.StatusCode)">@FormatStatus(c.StatusCode)</span></td>
+                            <td class="table-num">@c.DurationMs</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Security events (recent)</h2>
+        @if (recentSecurityEvents.Count == 0)
+        {
+            <div class="portal-table-shell">
+                <table class="portal-table" aria-label="Security events">
+                    <thead>
+                    <tr>
+                        <th scope="col">Time (UTC)</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Correlation ID</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td colspan="3" class="table-empty">No security events recorded in this process.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="portal-table-shell">
+                <table class="portal-table" aria-label="Security events">
+                    <thead>
+                    <tr>
+                        <th scope="col">Time (UTC)</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Correlation ID</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var e in recentSecurityEvents)
+                    {
+                        <tr>
+                            <td class="table-time">@e.Timestamp.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td><span class="reason-badge">@e.Reason</span></td>
+                            <td class="table-mono">@(string.IsNullOrWhiteSpace(e.CorrelationId) ? "n/a" : e.CorrelationId)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Runbooks</h2>
+        <ul class="obs-runbook-list">
+            <li><a href="/runbooks/incident-latency" target="_blank" rel="noreferrer">Latency incident</a></li>
+            <li><a href="/runbooks/incident-cost-spike" target="_blank" rel="noreferrer">Cost spike incident</a></li>
+            <li><a href="/runbooks/incident-llm-degradation" target="_blank" rel="noreferrer">LLM degradation incident</a></li>
+        </ul>
+    </div>
 </div>
 
 @code {
-    private bool heroDismissed = false;
+    private IReadOnlyList<ApiCallRecord> recentCalls = Array.Empty<ApiCallRecord>();
+    private IReadOnlyList<SecurityEventRecord> recentSecurityEvents = Array.Empty<SecurityEventRecord>();
 
-    private void DismissHero()
+    protected override void OnInitialized()
     {
-        heroDismissed = true;
+        Refresh();
+        ApiCallStore.ApiCallRecorded += OnApiCallRecorded;
+    }
+
+    private void OnApiCallRecorded(object? sender, ApiCallRecordedEventArgs e)
+    {
+        if (!string.Equals(e.SessionId, UiSession.SessionId, StringComparison.Ordinal))
+            return;
+
+        Refresh();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Refresh()
+    {
+        recentCalls = ApiCallStore.GetRecentCalls(UiSession.SessionId, count: 10);
+        recentSecurityEvents = SecurityEvents.GetRecent(count: 20);
+    }
+
+    private static string FormatStatus(int statusCode)
+        => statusCode == 0 ? "exception" : statusCode.ToString();
+
+    private static string StatusAccentClass(int statusCode)
+    {
+        if (statusCode == 0)
+            return "status-error";
+        if (statusCode >= 200 && statusCode < 300)
+            return "status-success";
+        if (statusCode >= 400 && statusCode < 500)
+            return "status-warning";
+        if (statusCode >= 500)
+            return "status-error";
+        return "status-info";
+    }
+
+    private static string MethodAccentClass(string method)
+    {
+        var m = (method ?? "GET").Trim().ToLowerInvariant();
+        return m switch
+        {
+            "get" => "method-get",
+            "post" => "method-post",
+            "put" => "method-put",
+            "patch" => "method-patch",
+            "delete" => "method-delete",
+            _ => ""
+        };
+    }
+
+    public void Dispose()
+    {
+        ApiCallStore.ApiCallRecorded -= OnApiCallRecorded;
     }
 }
-

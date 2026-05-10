@@ -21,6 +21,9 @@ public partial class Evaluations
     [Inject]
     private ILogger<Evaluations> Logger { get; set; } = default!;
 
+    [Inject]
+    private ILoadingService LoadingService { get; set; } = default!;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadLatestReport();
@@ -56,29 +59,31 @@ public partial class Evaluations
         isRunning = true;
         StateHasChanged();
 
-        try
+        await LoadingService.ExecuteWithLoadingAsync(async cancellationToken =>
         {
-            var response = await Http.PostAsync("/api/eval/run", null);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                latestReport = await response.Content.ReadFromJsonAsync<EvalReport>();
-                ToastService.ShowSuccess("Smoke eval completed. Metrics updated.", "Eval Done");
+                var response = await Http.PostAsync("/api/eval/run", null, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    latestReport = await response.Content.ReadFromJsonAsync<EvalReport>(cancellationToken: cancellationToken);
+                    ToastService.ShowSuccess("Smoke eval completed. Metrics updated.", "Eval Done");
+                }
+                else
+                {
+                    ToastService.ShowError("Eval run failed. Check that the dataset file exists and the API is healthy.", "Eval Error");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                ToastService.ShowError("Eval run failed. Check that the dataset file exists and the API is healthy.", "Eval Error");
+                Logger.LogError(ex, "Error running smoke eval");
+                ToastService.ShowError("An error occurred while running the eval.", "Eval Error");
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error running smoke eval");
-            ToastService.ShowError("An error occurred while running the eval.", "Eval Error");
-        }
-        finally
-        {
-            isRunning = false;
-            StateHasChanged();
-        }
+            finally
+            {
+                isRunning = false;
+            }
+        }, key: "eval-smoke");
     }
 
     private string GetMetricStatus(string metric, double value) => metric switch

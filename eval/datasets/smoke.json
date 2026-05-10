@@ -1,0 +1,107 @@
+{
+  "name": "smoke",
+  "version": "1.0.0",
+  "questions": [
+    {
+      "question": "What is AcmeCloud?",
+      "expectedKeyFacts": [
+        "cloud storage service",
+        "upload",
+        "organize",
+        "share files",
+        "securely across devices"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "product"
+    },
+    {
+      "question": "What does AcmeCloud allow users to do?",
+      "expectedKeyFacts": [
+        "upload",
+        "organize",
+        "share files"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "product"
+    },
+    {
+      "question": "How can I reset my password on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Settings",
+        "Security",
+        "Reset Password",
+        "email",
+        "reset link"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "account"
+    },
+    {
+      "question": "How long is the password reset link valid?",
+      "expectedKeyFacts": [
+        "15 minutes"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "account"
+    },
+    {
+      "question": "What file types does AcmeCloud support?",
+      "expectedKeyFacts": [
+        "PDF",
+        "DOCX",
+        "JPG",
+        "PNG",
+        "MP4",
+        "ZIP"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "Are executable files allowed on AcmeCloud?",
+      "expectedKeyFacts": [
+        "Executable files",
+        "blocked"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "files"
+    },
+    {
+      "question": "What is the storage limit on the AcmeCloud free plan?",
+      "expectedKeyFacts": [
+        "free plan",
+        "5 GB"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "plans"
+    },
+    {
+      "question": "How much storage do I get for free on AcmeCloud?",
+      "expectedKeyFacts": [
+        "5 GB",
+        "free"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "plans"
+    },
+    {
+      "question": "Can I share files with people outside my organization on AcmeCloud?",
+      "expectedKeyFacts": [
+        "share link",
+        "external users"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "sharing"
+    },
+    {
+      "question": "What sharing permissions are available on AcmeCloud?",
+      "expectedKeyFacts": [
+        "View only",
+        "Comment",
+        "Edit"
+      ],
+      "expectedDocIds": [ "faq.txt" ],
+      "category": "sharing"
+    }
+  ]
+}

@@ -68,6 +68,13 @@ public class MockLLMClientTests
     }
 
     [Fact]
+    public void TelemetryModelId_IsLowCardinalityLabelForOpenTelemetry()
+    {
+        ILLMClient client = new MockLLMClient();
+        Assert.Equal("mock-llm", client.TelemetryModelId);
+    }
+
+    [Fact]
     public async Task GenerateAsync_WithWhitespace_TrimsInput()
     {
         // Arrange

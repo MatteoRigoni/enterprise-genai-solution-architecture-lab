@@ -11,6 +11,9 @@ namespace AiSa.Infrastructure;
 /// </summary>
 public class MockLLMClient : ILLMClient
 {
+    /// <inheritdoc />
+    public string TelemetryModelId => "mock-llm";
+
     public Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken = default)
     {
         var userQuestion = ExtractUserQuestionFromPrompt(prompt);

@@ -45,3 +45,9 @@ Reports are written under `eval/reports/` with timestamped filenames (for exampl
 
 Both paths use the same underlying dataset schema and report models defined in the Domain project.
 
+## CI smoke dataset and EvalRunner gates
+
+- **Smoke file**: `datasets/smoke.json` (10 questions) is used in GitHub Actions after tests; the API is started with `AISA_CI_EVAL=1` so retrieval uses an in-process FAQ stub aligned with mock LLM behavior (no cloud vector store).
+- **Thresholds** (optional CLI flags): `--min-answered-rate` and `--min-citation-presence-rate` accept values between 0 and 1 (invariant culture, e.g. `0.8`). If any configured threshold is not met, EvalRunner exits with code 3 after writing the report.
+- **Subset runs**: `--max-questions N` limits how many questions from the dataset file are executed.
+

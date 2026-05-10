@@ -2,6 +2,9 @@ using System.Diagnostics;
 using System.Text;
 using AiSa.Application;
 using AiSa.Application.Models;
+using AiSa.Application.Observability;
+using AiSa.Application.Telemetry;
+using AiSa.Host.Telemetry;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AiSa.Host.Endpoints;
@@ -23,12 +26,20 @@ internal static class ChatEndpoints
                 IChatService chatService,
                 ISecurityService securityService,
                 ActivitySource activitySource,
+                ChatMetrics chatMetrics,
+                GenAiMetrics genAiMetrics,
+                ISecurityEventRecorder securityEventRecorder,
                 HttpContext httpContext,
                 CancellationToken cancellationToken) =>
             {
+                var sw = Stopwatch.StartNew();
+                void Record(ChatRequestOutcome o) =>
+                    chatMetrics.RecordChatRequest("chat", o, sw.Elapsed);
+
                 // Minimal input validation as a 400 (ProblemDetails is still RFC7807)
                 if (string.IsNullOrWhiteSpace(request.Message))
                 {
+                    Record(ChatRequestOutcome.ClientError);
                     return Results.Problem(
                         statusCode: StatusCodes.Status400BadRequest,
                         title: "Bad Request",
@@ -39,6 +50,9 @@ internal static class ChatEndpoints
                 var validationResult = securityService.ValidateInput(request.Message);
                 if (!validationResult.IsValid)
                 {
+                    genAiMetrics.RecordSecurityEvent("input_rejected");
+                    securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "input_rejected", Activity.Current?.GetBaggageItem("correlation.id") ?? Activity.Current?.Id));
+                    Record(ChatRequestOutcome.ClientError);
                     return Results.Problem(
                         statusCode: StatusCodes.Status400BadRequest,
                         title: "Bad Request",
@@ -51,11 +65,21 @@ internal static class ChatEndpoints
                 // Low-cardinality metadata only (avoid logging raw prompts)
                 activity?.SetTag("chat.message.length", request.Message.Length);
 
-                var response = await chatService.ProcessChatAsync(request, cancellationToken);
+                ChatResponse response;
+                try
+                {
+                    response = await chatService.ProcessChatAsync(request, cancellationToken);
+                }
+                catch
+                {
+                    Record(ChatRequestOutcome.ServerError);
+                    throw;
+                }
 
                 activity?.SetTag("chat.response.length", response.Response?.Length ?? 0);
                 activity?.SetStatus(ActivityStatusCode.Ok);
 
+                Record(ChatRequestOutcome.Success);
                 return Results.Ok(response);
             })
             .WithName("ChatApi")
@@ -109,14 +133,22 @@ internal static class ChatEndpoints
                 ILLMClient llmClient,
                 IRetrievalService retrievalService,
                 ActivitySource activitySource,
+                ChatMetrics chatMetrics,
+                GenAiMetrics genAiMetrics,
+                ISecurityEventRecorder securityEventRecorder,
                 HttpContext httpContext,
                 CancellationToken cancellationToken) =>
             {
+                var sw = Stopwatch.StartNew();
+                void Record(ChatRequestOutcome o) =>
+                    chatMetrics.RecordChatRequest("chat_stream", o, sw.Elapsed);
+
                 // Minimal input validation
                 if (string.IsNullOrWhiteSpace(request.Message))
                 {
                     httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                     await httpContext.Response.WriteAsync("data: {\"error\":\"Message cannot be empty\"}\n\n", cancellationToken);
+                    Record(ChatRequestOutcome.ClientError);
                     return;
                 }
 
@@ -127,6 +159,9 @@ internal static class ChatEndpoints
                     httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                     var errorJson = $"{{\"error\":\"{validationResult.RejectionReason?.Replace("\"", "\\\"") ?? "Input validation failed"}\"}}";
                     await httpContext.Response.WriteAsync($"data: {errorJson}\n\n", cancellationToken);
+                    genAiMetrics.RecordSecurityEvent("input_rejected");
+                    securityEventRecorder.Record(new SecurityEventRecord(DateTimeOffset.UtcNow, "input_rejected", Activity.Current?.GetBaggageItem("correlation.id") ?? Activity.Current?.Id));
+                    Record(ChatRequestOutcome.ClientError);
                     return;
                 }
 
@@ -171,20 +206,38 @@ internal static class ChatEndpoints
                     await httpContext.Response.WriteAsync($"data: {{\"type\":\"metadata\",\"data\":{metadataJson}}}\n\n", cancellationToken);
                     await httpContext.Response.Body.FlushAsync(cancellationToken);
 
-                    // Step 3: Stream LLM response
+                    // Step 3: Stream LLM response (retrieval.query span already completed in RetrieveAsync)
                     var fullResponse = new StringBuilder();
-                    await foreach (var chunk in llmClient.GenerateStreamAsync(prompt, cancellationToken))
+                    using (var llmGen = activitySource.StartActivity("llm.generate", ActivityKind.Internal))
                     {
-                        fullResponse.Append(chunk);
-                        
-                        // Send chunk as SSE
-                        var chunkJson = System.Text.Json.JsonSerializer.Serialize(new
+                        llmGen?.SetTag("gen_ai.request.model", llmClient.TelemetryModelId);
+                        llmGen?.SetTag("llm.prompt.length", prompt.Length);
+                        llmGen?.SetTag("llm.context.chunkCount", resultsList.Count);
+                        try
                         {
-                            type = "chunk",
-                            data = chunk
-                        });
-                        await httpContext.Response.WriteAsync($"data: {chunkJson}\n\n", cancellationToken);
-                        await httpContext.Response.Body.FlushAsync(cancellationToken);
+                            await foreach (var chunk in llmClient.GenerateStreamAsync(prompt, cancellationToken))
+                            {
+                                fullResponse.Append(chunk);
+
+                                // Send chunk as SSE
+                                var chunkJson = System.Text.Json.JsonSerializer.Serialize(new
+                                {
+                                    type = "chunk",
+                                    data = chunk
+                                });
+                                await httpContext.Response.WriteAsync($"data: {chunkJson}\n\n", cancellationToken);
+                                await httpContext.Response.Body.FlushAsync(cancellationToken);
+                            }
+
+                            llmGen?.SetTag("llm.response.length", fullResponse.Length);
+                            llmGen?.SetStatus(ActivityStatusCode.Ok);
+                        }
+                        catch (Exception ex)
+                        {
+                            llmGen?.SetStatus(ActivityStatusCode.Error);
+                            llmGen?.SetTag("error.type", ex.GetType().Name);
+                            throw;
+                        }
                     }
 
                     // Send completion marker
@@ -193,9 +246,11 @@ internal static class ChatEndpoints
 
                     activity?.SetTag("chat.response.length", fullResponse.Length);
                     activity?.SetStatus(ActivityStatusCode.Ok);
+                    Record(ChatRequestOutcome.Success);
                 }
                 catch (Exception ex)
                 {
+                    Record(ChatRequestOutcome.ServerError);
                     activity?.SetStatus(ActivityStatusCode.Error);
                     activity?.SetTag("error.type", ex.GetType().Name);
                     

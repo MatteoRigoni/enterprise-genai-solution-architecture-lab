@@ -643,3 +643,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Local / CI eval smoke output (timestamped JSON; not source-controlled)
+eval/reports/ci-smoke/

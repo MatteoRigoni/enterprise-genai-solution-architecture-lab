@@ -6,7 +6,11 @@ using AiSa.Host.Endpoints;
 using AiSa.Host.Handlers;
 using AiSa.Host.Middleware;
 using AiSa.Host.Services;
+using AiSa.Host.Telemetry;
 using AiSa.Infrastructure;
+using AiSa.Application.FinOps;
+using AiSa.Application.Observability;
+using AiSa.Application.Telemetry;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -203,8 +207,19 @@ builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 // Document ingestion
 builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
 
-// Retrieval service
-builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+// Retrieval service — CI eval smoke uses a deterministic FAQ stub (no Azure Search / embeddings).
+var ciEval = string.Equals(
+    Environment.GetEnvironmentVariable("AISA_CI_EVAL"),
+    "1",
+    StringComparison.Ordinal);
+if (ciEval)
+{
+    builder.Services.AddScoped<IRetrievalService, CiEvalFaqStubRetrievalService>();
+}
+else
+{
+    builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+}
 
 // Vector store: provider toggle (ADR-0003)
 var vectorStoreSection = builder.Configuration.GetSection("VectorStore");
@@ -228,6 +243,17 @@ builder.Services.AddSingleton<IDocumentMetadataStore, PostgresDocumentMetadataSt
 
 // ActivitySource for custom spans
 builder.Services.AddSingleton(new ActivitySource("AiSa.Host"));
+
+// OpenTelemetry chat metrics (/api/chat, /api/chat/stream)
+builder.Services.AddSingleton<ChatMetrics>();
+
+// GenAI metrics and pricing options (tokens + estimated cost + security events)
+builder.Services.AddSingleton<GenAiMetrics>();
+builder.Services.Configure<FinOpsPricingOptions>(builder.Configuration.GetSection("FinOps:Pricing"));
+
+// Security events recorder for UI (metadata only)
+builder.Services.AddSingleton<InMemorySecurityEventRecorder>();
+builder.Services.AddSingleton<ISecurityEventRecorder>(sp => sp.GetRequiredService<InMemorySecurityEventRecorder>());
 
 // Eval metrics service
 builder.Services.AddSingleton<AiSa.Application.Eval.IEvalService, AiSa.Application.Eval.EvalService>();
@@ -373,6 +399,7 @@ app.MapChatEndpoints();
 app.MapDocumentEndpoints();
 app.MapFeedbackEndpoints();
 app.MapEvalEndpoints();
+app.MapRunbookEndpoints();
 
 // Fake Login/Logout endpoints (for demo purposes)
 app.MapGet("/Account/Login", async (HttpContext context) =>

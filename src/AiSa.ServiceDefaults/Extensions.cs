@@ -74,11 +74,15 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    // Custom chat metrics (see AiSa.Host.Telemetry.ChatMetrics.MeterName)
+                    .AddMeter("AiSa.Chat")
+                    .AddMeter("AiSa.GenAI");
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
+                    .AddSource("AiSa.Host")
                     .AddAspNetCoreInstrumentation(options =>
                     {
                         // Exclude health check requests from tracing

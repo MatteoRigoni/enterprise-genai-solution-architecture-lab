@@ -24,19 +24,17 @@
     }
 
     <!-- Run Eval Section -->
-    <div class="dashboard-section">
-        <div class="section-header">
+    <div class="dashboard-section @(isRunning ? "eval-run-section-busy" : "")">
+        <div class="page-section-header">
             <h2 class="text-section">Smoke Evaluation</h2>
             <FluentButton Appearance="Appearance.Accent"
                          OnClick="RunSmokeEval"
                          disabled="@isRunning"
-                         class="run-eval-button">
-                <div class="button-inner">
-                    <span class="@(isRunning ? "icon-spin" : "")">
-                        <FluentIcon Value="@(new Icons.Regular.Size16.ArrowSync())" />
-                    </span>
-                    <span>@(isRunning ? "Running eval..." : "Run Smoke Eval")</span>
-                </div>
+                         Loading="@isRunning"
+                         class="btn-toolbar-end"
+                         IconStart="@(new Icons.Regular.Size16.ArrowSync())"
+                         Title="Run smoke evaluation">
+                Run Smoke Eval
             </FluentButton>
         </div>
         <p class="text-body eval-description">Runs the first 5 questions from the base dataset in-process and writes a report to <code>eval/reports/</code>.</p>
