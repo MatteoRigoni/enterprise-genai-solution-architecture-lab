@@ -1,16 +1,19 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
-using AiSa.Application.Models;
 using AiSa.Application.Eval;
+using AiSa.Application.Models;
 using AiSa.Domain.Eval;
 
-var (datasetPath, baseUrl, outputDirectory) = ParseArgs(args);
+var (datasetPath, baseUrl, outputDirectory, maxQuestions, thresholds) = ParseArgs(args);
 
 Console.WriteLine("AiSa EvalRunner");
 Console.WriteLine($"Dataset : {datasetPath}");
 Console.WriteLine($"Base URL: {baseUrl}");
 Console.WriteLine($"Output  : {outputDirectory}");
+if (maxQuestions is { } lim && lim > 0)
+    Console.WriteLine($"Limit   : {lim} questions");
 Console.WriteLine();
 
 if (!File.Exists(datasetPath))
@@ -27,15 +30,21 @@ if (dataset is null || dataset.Questions.Count == 0)
     return 1;
 }
 
+var questions = dataset.Questions;
+if (maxQuestions is { } cap && cap > 0 && cap < questions.Count)
+{
+    questions = questions.Take(cap).ToList();
+}
+
 Directory.CreateDirectory(outputDirectory);
 
 using var http = new HttpClient { BaseAddress = new Uri(baseUrl) };
 var evalService = new EvalService();
 
-var results = new List<EvalResult>(dataset.Questions.Count);
+var results = new List<EvalResult>(questions.Count);
 var stopwatch = Stopwatch.StartNew();
 
-foreach (var question in dataset.Questions)
+foreach (var question in questions)
 {
     var questionStopwatch = Stopwatch.StartNew();
 
@@ -43,7 +52,15 @@ foreach (var question in dataset.Questions)
     try
     {
         var httpResponse = await http.PostAsJsonAsync("/api/chat", new ChatRequest { Message = question.Question });
-        response = await httpResponse.Content.ReadFromJsonAsync<ChatResponse>();
+        if (!httpResponse.IsSuccessStatusCode)
+        {
+            Console.Error.WriteLine($"HTTP {(int)httpResponse.StatusCode} from /api/chat.");
+            response = null;
+        }
+        else
+        {
+            response = await httpResponse.Content.ReadFromJsonAsync<ChatResponse>();
+        }
     }
     catch (Exception ex)
     {
@@ -122,29 +139,69 @@ Console.WriteLine($"p95 latency (ms)    : {metrics.P95LatencyMs:F0}");
 Console.WriteLine($"Run duration (ms)   : {report.RunDurationMs}");
 Console.WriteLine($"Report written to   : {reportPath}");
 
+if (thresholds is not null &&
+    (thresholds.MinAnsweredRate is not null || thresholds.MinCitationPresenceRate is not null))
+{
+    var failure = EvalThresholdGate.GetFailureReason(metrics, thresholds);
+    if (failure is not null)
+    {
+        Console.Error.WriteLine(failure);
+        return 3;
+    }
+}
+
 return 0;
 
-static (string DatasetPath, string BaseUrl, string OutputDirectory) ParseArgs(string[] arguments)
+static (string DatasetPath, string BaseUrl, string OutputDirectory, int? MaxQuestions, EvalThresholdOptions? Thresholds)
+    ParseArgs(string[] arguments)
 {
     var dataset = "eval/datasets/base.json";
     var baseUrl = "http://localhost:5000";
     var output = "eval/reports";
+    int? maxQuestions = null;
+    double? minAnswered = null;
+    double? minCitationPresence = null;
 
-    for (var i = 0; i < arguments.Length - 1; i++)
+    for (var i = 0; i < arguments.Length; i++)
     {
         switch (arguments[i])
         {
-            case "--dataset":
-                dataset = arguments[i + 1];
+            case "--dataset" when i + 1 < arguments.Length:
+                dataset = arguments[++i];
                 break;
-            case "--base-url":
-                baseUrl = arguments[i + 1];
+            case "--base-url" when i + 1 < arguments.Length:
+                baseUrl = arguments[++i];
                 break;
-            case "--output":
-                output = arguments[i + 1];
+            case "--output" when i + 1 < arguments.Length:
+                output = arguments[++i];
+                break;
+            case "--max-questions" when i + 1 < arguments.Length && int.TryParse(arguments[++i], out var maxQ):
+                maxQuestions = maxQ;
+                break;
+            case "--min-answered-rate" when i + 1 < arguments.Length && double.TryParse(
+                arguments[++i],
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var minA):
+                minAnswered = minA;
+                break;
+            case "--min-citation-presence-rate" when i + 1 < arguments.Length && double.TryParse(
+                arguments[++i],
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var minC):
+                minCitationPresence = minC;
                 break;
         }
     }
 
-    return (dataset, baseUrl, output);
+    EvalThresholdOptions? thresholds = minAnswered is not null || minCitationPresence is not null
+        ? new EvalThresholdOptions
+        {
+            MinAnsweredRate = minAnswered,
+            MinCitationPresenceRate = minCitationPresence
+        }
+        : null;
+
+    return (dataset, baseUrl, output, maxQuestions, thresholds);
 }

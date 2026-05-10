@@ -207,8 +207,19 @@ builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 // Document ingestion
 builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
 
-// Retrieval service
-builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+// Retrieval service — CI eval smoke uses a deterministic FAQ stub (no Azure Search / embeddings).
+var ciEval = string.Equals(
+    Environment.GetEnvironmentVariable("AISA_CI_EVAL"),
+    "1",
+    StringComparison.Ordinal);
+if (ciEval)
+{
+    builder.Services.AddScoped<IRetrievalService, CiEvalFaqStubRetrievalService>();
+}
+else
+{
+    builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+}
 
 // Vector store: provider toggle (ADR-0003)
 var vectorStoreSection = builder.Configuration.GetSection("VectorStore");

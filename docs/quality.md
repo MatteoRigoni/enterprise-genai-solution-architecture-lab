@@ -1,4 +1,4 @@
-# Quality & Operability
+﻿# Quality & Operability
 
 ## SLO (initial)
 - Chat p95 latency < 8s (dev)
@@ -29,6 +29,11 @@ Automated eval runs measure the following metrics against the versioned dataset 
 
 Reports are written to eval/reports/YYYYMMDD-HHMM.json and viewable from the portal Evaluations page.
 
+### CI (GitHub Actions)
+
+The workflow .github/workflows/ci.yml runs on pull requests and pushes to main: dotnet build, dotnet test, then an eval smoke against a locally started AiSa.Host with AISA_CI_EVAL=1 (deterministic FAQ retrieval stub; no Azure or Postgres required for that step). EvalRunner uses eval/datasets/smoke.json and fails the job if --min-answered-rate or --min-citation-presence-rate is not met. JSON reports are uploaded as the eval-smoke-report artifact (metadata and aggregate metrics only in logs; see ADR-0004).
+
+
 ### Dataset Drift Detection
 
 Compare consecutive eval reports to detect quality degradation over time:
@@ -44,3 +49,4 @@ Compare consecutive eval reports to detect quality degradation over time:
 - Telemetry spans present
 - ADR updated if architectural change
 - No sensitive logs
+
