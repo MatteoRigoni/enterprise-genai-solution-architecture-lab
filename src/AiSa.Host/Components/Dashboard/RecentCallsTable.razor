@@ -1,8 +1,8 @@
 @using AiSa.Host.Services
 @using Microsoft.FluentUI.AspNetCore.Components
 
-<div class="recent-calls-table">
-    <table class="calls-table">
+<div class="portal-table-shell">
+    <table class="portal-table">
         <thead>
             <tr>
                 <th>Time</th>
@@ -20,7 +20,7 @@
                     <tr>
                         <td>@FormatRelativeTime(call.Timestamp)</td>
                         <td><span class="method-badge method-@call.Method.ToLowerInvariant()">@call.Method</span></td>
-                        <td class="path-cell">@call.Path</td>
+                        <td class="table-path" title="@call.Path">@call.Path</td>
                         <td><span class="status-badge status-@GetStatusClass(call.StatusCode)">@call.StatusCode</span></td>
                         <td>@call.DurationMs ms</td>
                     </tr>
@@ -29,7 +29,7 @@
             else
             {
                 <tr>
-                    <td colspan="5" class="empty-state">No API calls yet</td>
+                    <td colspan="5" class="table-empty">No API calls yet</td>
                 </tr>
             }
         </tbody>
