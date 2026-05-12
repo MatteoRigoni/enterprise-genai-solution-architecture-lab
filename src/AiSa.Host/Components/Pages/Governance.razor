@@ -17,17 +17,58 @@
                     <FluentIcon Value="@(new Icons.Regular.Size20.Dismiss())" />
                 </FluentButton>
             </div>
-            <p class="text-body">Coming soon - Data governance and knowledge management interface will be implemented here.</p>
+            <p class="text-body">Data classification and knowledge lifecycle rules applied at ingestion. Full policy: <strong>docs/governance.md</strong>.</p>
         </div>
     }
+
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Classification</h2>
+        <div class="surface-card">
+            <ul class="text-body governance-list">
+                <li><strong>Public</strong> — may be indexed for demos.</li>
+                <li><strong>Internal</strong> — default enterprise knowledge; requires an owner.</li>
+                <li><strong>Confidential</strong> — requires explicit approval flag and approver identity in metadata.</li>
+                <li><strong>Restricted</strong> — must not be indexed; upload is rejected.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Ingestion controls</h2>
+        <div class="surface-card">
+            <p class="text-body">Each upload runs server-side checks: classification rules, confidential approval, and pattern-based content screening (secrets/credentials). Logs and traces contain metadata only — never raw document text.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h2 class="text-section spacing-group">Example metadata (per document)</h2>
+        <div class="surface-card">
+            <p class="text-body spacing-group">After ingest, the API and Documents list expose fields such as:</p>
+            <pre class="governance-json">@ExampleMetadataJson</pre>
+            <p class="text-body spacing-group">Upload a document on <a href="/documents" class="link-inline">Documents</a> with classification <strong>Internal</strong> to see live values in the list.</p>
+        </div>
+    </div>
 </div>
 
 @code {
-    private bool heroDismissed = false;
+    private bool heroDismissed;
 
-    private void DismissHero()
-    {
-        heroDismissed = true;
-    }
+    private const string ExampleMetadataJson = """
+{
+  "documentId": "faq-20250127120000",
+  "sourceName": "faq.txt",
+  "classification": "Internal",
+  "owner": "PlatformTeam",
+  "sourceType": "file",
+  "version": 1,
+  "chunkCount": 8,
+  "indexedAt": "2025-01-27T12:00:00Z",
+  "confidentialApproved": false,
+  "approvedBy": null,
+  "lastReviewedAt": null,
+  "expiresAt": null
 }
+""";
 
+    private void DismissHero() => heroDismissed = true;
+}

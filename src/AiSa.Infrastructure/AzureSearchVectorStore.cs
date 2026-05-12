@@ -97,7 +97,9 @@ public class AzureSearchVectorStore : IVectorStore
             ["contentVector"] = chunk.Vector,
             ["sourceId"] = chunk.SourceId,
             ["sourceName"] = chunk.SourceName,
-            ["indexedAt"] = chunk.IndexedAt
+            ["indexedAt"] = chunk.IndexedAt,
+            ["documentVersion"] = chunk.DocumentVersion,
+            ["classification"] = chunk.Classification
         }).ToList();
 
         // Upload documents in batches
@@ -160,7 +162,7 @@ public class AzureSearchVectorStore : IVectorStore
                 }}
             },
             Size = topK,
-            Select = { "chunkId", "chunkIndex", "content", "sourceId", "sourceName", "indexedAt" }
+            Select = { "chunkId", "chunkIndex", "content", "sourceId", "sourceName", "indexedAt", "documentVersion", "classification" }
         };
 
         var searchResults = await _searchClient.SearchAsync<SearchDocument>("*", searchOptions, cancellationToken);
@@ -181,7 +183,9 @@ public class AzureSearchVectorStore : IVectorStore
                     SourceName = doc["sourceName"].ToString() ?? string.Empty,
                     IndexedAt = doc["indexedAt"] != null && DateTimeOffset.TryParse(doc["indexedAt"].ToString(), out var dt)
                         ? dt
-                        : DateTimeOffset.UtcNow
+                        : DateTimeOffset.UtcNow,
+                    DocumentVersion = doc["documentVersion"] != null ? Convert.ToInt32(doc["documentVersion"]) : 1,
+                    Classification = doc["classification"]?.ToString() ?? nameof(DataClassification.Internal)
                 };
 
                 results.Add(new SearchResult
@@ -257,7 +261,8 @@ public class AzureSearchVectorStore : IVectorStore
             // Check if index exists
             try
             {
-                await _indexClient.GetIndexAsync(_indexName, cancellationToken);
+                var existing = await _indexClient.GetIndexAsync(_indexName, cancellationToken);
+                await EnsureLineageFieldsAsync(existing.Value, cancellationToken);
                 return; // Index exists
             }
             catch (RequestFailedException ex) when (ex.Status == 404)
@@ -282,7 +287,9 @@ public class AzureSearchVectorStore : IVectorStore
                         },
                         new SimpleField("sourceId", SearchFieldDataType.String) { IsFilterable = true },
                         new SimpleField("sourceName", SearchFieldDataType.String) { IsFilterable = true },
-                        new SimpleField("indexedAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true }
+                        new SimpleField("indexedAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true },
+                        new SimpleField("documentVersion", SearchFieldDataType.Int32) { IsFilterable = true },
+                        new SimpleField("classification", SearchFieldDataType.String) { IsFilterable = true }
                     },
                     VectorSearch = new()
                     {
@@ -304,6 +311,29 @@ public class AzureSearchVectorStore : IVectorStore
         finally
         {
             _indexCreationLock.Release();
+        }
+    }
+
+    private async Task EnsureLineageFieldsAsync(SearchIndex index, CancellationToken cancellationToken)
+    {
+        var names = new HashSet<string>(index.Fields.Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
+        var changed = false;
+        if (!names.Contains("documentVersion"))
+        {
+            index.Fields.Add(new SimpleField("documentVersion", SearchFieldDataType.Int32) { IsFilterable = true });
+            changed = true;
+        }
+
+        if (!names.Contains("classification"))
+        {
+            index.Fields.Add(new SimpleField("classification", SearchFieldDataType.String) { IsFilterable = true });
+            changed = true;
+        }
+
+        if (changed)
+        {
+            _logger.LogInformation("Updating Azure AI Search index with lineage fields: {IndexName}", _indexName);
+            await _indexClient.CreateOrUpdateIndexAsync(index, allowIndexDowntime: false, onlyIfUnchanged: false, cancellationToken);
         }
     }
 }

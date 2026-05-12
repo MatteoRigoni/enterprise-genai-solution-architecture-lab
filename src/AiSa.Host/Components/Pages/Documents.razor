@@ -60,6 +60,26 @@
     <!-- Upload Section -->
     <div class="dashboard-section">
         <h2 class="text-section spacing-group">Upload Document</h2>
+        <div class="surface-card upload-section governance-upload-meta">
+            <p class="text-body spacing-group">Governance fields are required for ingestion (see <a href="/governance" class="link-inline">Governance</a>).</p>
+            <div class="governance-form-grid">
+                <label class="gov-label" for="gov-classification">Classification</label>
+                <select id="gov-classification" class="gov-select" @bind="classification">
+                    <option value="Public">Public</option>
+                    <option value="Internal">Internal</option>
+                    <option value="Confidential">Confidential</option>
+                </select>
+                <label class="gov-label" for="gov-owner">Owner (team)</label>
+                <FluentTextField id="gov-owner" @bind-Value="owner" Placeholder="e.g. PlatformTeam" class="gov-field" />
+                @if (string.Equals(classification, "Confidential", StringComparison.OrdinalIgnoreCase))
+                {
+                    <label class="gov-label" for="gov-approved">Approved for ingestion</label>
+                    <FluentCheckbox id="gov-approved" @bind-Value="confidentialApproved">I confirm this Confidential document is approved for indexing.</FluentCheckbox>
+                    <label class="gov-label" for="gov-approved-by">Approved by</label>
+                    <FluentTextField id="gov-approved-by" @bind-Value="approvedBy" Placeholder="Approver id or name" class="gov-field" />
+                }
+            </div>
+        </div>
         <div class="surface-card upload-section">
             <div class="upload-zone @(isDragOver ? "drag-over" : "")"
                  @ondrop="HandleDrop"
@@ -150,6 +170,8 @@
                         <thead>
                             <tr>
                                 <th>Document Name</th>
+                                <th>Classification</th>
+                                <th>Owner</th>
                                 <th>Status</th>
                                 <th>Chunks</th>
                                 <th>Indexed At</th>
@@ -165,6 +187,10 @@
                                             <span>@doc.sourceName</span>
                                         </div>
                                     </td>
+                                    <td>
+                                        <FluentBadge Appearance="Appearance.Neutral">@doc.classification</FluentBadge>
+                                    </td>
+                                    <td class="text-body-sm">@doc.owner</td>
                                     <td class="status-cell">
                                         <FluentBadge Appearance="@GetStatusAppearance(doc.status)">
                                             @GetStatusText(doc.status)

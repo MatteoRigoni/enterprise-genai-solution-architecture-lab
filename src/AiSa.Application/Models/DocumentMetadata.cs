@@ -54,4 +54,29 @@ public class DocumentMetadata
     /// SHA-256 hash of document content.
     /// </summary>
     public string? ContentHash { get; init; }
+
+    /// <summary>
+    /// Data classification at ingestion time.
+    /// </summary>
+    public DataClassification Classification { get; init; } = DataClassification.Internal;
+
+    /// <summary>
+    /// Owning team or party (stored as provided; avoid logging as PII in telemetry).
+    /// </summary>
+    public string Owner { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Source type: file, url, manual, etc.
+    /// </summary>
+    public string SourceType { get; init; } = "file";
+
+    public bool ConfidentialApproved { get; init; }
+
+    public string? ApprovedBy { get; init; }
+
+    public DateTimeOffset? ApprovedAt { get; init; }
+
+    public DateTimeOffset? LastReviewedAt { get; init; }
+
+    public DateTimeOffset? ExpiresAt { get; init; }
 }

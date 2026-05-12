@@ -205,6 +205,7 @@ builder.Services.Configure<AzureOpenAIOptions>(
 builder.Services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 
 // Document ingestion
+builder.Services.AddSingleton<IngestionContentGuard>();
 builder.Services.AddScoped<IDocumentIngestionService, DocumentIngestionService>();
 
 // Retrieval service — CI eval smoke uses a deterministic FAQ stub (no Azure Search / embeddings).

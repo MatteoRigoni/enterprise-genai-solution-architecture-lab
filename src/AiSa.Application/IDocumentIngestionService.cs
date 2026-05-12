@@ -37,4 +37,15 @@ public interface IDocumentIngestionService
         string sourceName,
         bool updateExisting,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Ingest with governance context (classification, owner, lineage version). Pass null for programmatic default (Internal).
+    /// </summary>
+    Task<IngestionResult> IngestAsync(
+        Stream stream,
+        string sourceId,
+        string sourceName,
+        bool updateExisting,
+        IngestionGovernanceContext? governance,
+        CancellationToken cancellationToken = default);
 }

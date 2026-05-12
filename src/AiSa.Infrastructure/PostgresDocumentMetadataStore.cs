@@ -14,6 +14,10 @@ namespace AiSa.Infrastructure;
 public class PostgresDocumentMetadataStore : IDocumentMetadataStore
 {
     private const string TableName = "aisa_document_metadata";
+
+    private const string SelectColumns =
+        "document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash, classification, owner, source_type, confidential_approved, approved_by, approved_at, last_reviewed_at, expires_at";
+
     private static readonly SemaphoreSlim InitLock = new(1, 1);
 
     private readonly NpgsqlDataSource _dataSource;
@@ -48,7 +52,7 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
         // Retrieve and lock latest active version for this source name
         DocumentMetadata? existingLatest = null;
         await using (var latestCmd = new NpgsqlCommand($"""
-            SELECT document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash
+            SELECT {SelectColumns}
             FROM {TableName}
             WHERE source_name_normalized = $1 AND is_deprecated = FALSE
             ORDER BY version DESC
@@ -79,8 +83,8 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
 
         await using (var insertCmd = new NpgsqlCommand($"""
             INSERT INTO {TableName}
-            (document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, $9)
+            (document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash, classification, owner, source_type, confidential_approved, approved_by, approved_at, last_reviewed_at, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             ON CONFLICT (document_id)
             DO UPDATE SET
                 source_name = EXCLUDED.source_name,
@@ -91,7 +95,15 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
                 version = EXCLUDED.version,
                 previous_version_id = EXCLUDED.previous_version_id,
                 is_deprecated = EXCLUDED.is_deprecated,
-                content_hash = EXCLUDED.content_hash
+                content_hash = EXCLUDED.content_hash,
+                classification = EXCLUDED.classification,
+                owner = EXCLUDED.owner,
+                source_type = EXCLUDED.source_type,
+                confidential_approved = EXCLUDED.confidential_approved,
+                approved_by = EXCLUDED.approved_by,
+                approved_at = EXCLUDED.approved_at,
+                last_reviewed_at = EXCLUDED.last_reviewed_at,
+                expires_at = EXCLUDED.expires_at
             """, conn, tx))
         {
             insertCmd.Parameters.AddWithValue(result.SourceId);
@@ -103,6 +115,14 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
             insertCmd.Parameters.AddWithValue(version);
             insertCmd.Parameters.AddWithValue((object?)previousVersionId ?? DBNull.Value);
             insertCmd.Parameters.AddWithValue((object?)result.ContentHash ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue(result.Classification.ToString());
+            insertCmd.Parameters.AddWithValue(result.Owner);
+            insertCmd.Parameters.AddWithValue(result.SourceType);
+            insertCmd.Parameters.AddWithValue(result.ConfidentialApproved);
+            insertCmd.Parameters.AddWithValue((object?)result.ApprovedBy ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue((object?)result.ApprovedAt ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue((object?)result.LastReviewedAt ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue((object?)result.ExpiresAt ?? DBNull.Value);
             await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
@@ -116,7 +136,7 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
 
         await using var conn = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand($"""
-            SELECT document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash
+            SELECT {SelectColumns}
             FROM {TableName}
             WHERE is_deprecated = FALSE
             ORDER BY indexed_at DESC
@@ -137,7 +157,7 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
 
         await using var conn = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand($"""
-            SELECT document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash
+            SELECT {SelectColumns}
             FROM {TableName}
             WHERE document_id = $1
             LIMIT 1
@@ -160,7 +180,7 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
 
         await using var conn = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand($"""
-            SELECT document_id, source_name, source_name_normalized, chunk_count, indexed_at, status, version, previous_version_id, is_deprecated, content_hash
+            SELECT {SelectColumns}
             FROM {TableName}
             WHERE source_name_normalized = $1 AND is_deprecated = FALSE
             ORDER BY version DESC
@@ -213,6 +233,14 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
                 );
                 CREATE INDEX IF NOT EXISTS idx_{TableName}_source_active
                     ON {TableName} (source_name_normalized, is_deprecated, version DESC);
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS classification TEXT NOT NULL DEFAULT 'Internal';
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS owner TEXT NOT NULL DEFAULT 'unknown';
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT 'file';
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS confidential_approved BOOLEAN NOT NULL DEFAULT FALSE;
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS approved_by TEXT NULL;
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ NULL;
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS last_reviewed_at TIMESTAMPTZ NULL;
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NULL;
                 """, conn);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
@@ -227,6 +255,10 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
 
     private static DocumentMetadata MapRow(NpgsqlDataReader reader)
     {
+        var classification = Enum.TryParse<DataClassification>(reader.GetString(10), ignoreCase: true, out var cls)
+            ? cls
+            : DataClassification.Internal;
+
         return new DocumentMetadata
         {
             DocumentId = reader.GetString(0),
@@ -240,7 +272,15 @@ public class PostgresDocumentMetadataStore : IDocumentMetadataStore
             Version = reader.GetInt32(6),
             PreviousVersionId = reader.IsDBNull(7) ? null : reader.GetString(7),
             IsDeprecated = reader.GetBoolean(8),
-            ContentHash = reader.IsDBNull(9) ? null : reader.GetString(9)
+            ContentHash = reader.IsDBNull(9) ? null : reader.GetString(9),
+            Classification = classification,
+            Owner = reader.GetString(11),
+            SourceType = reader.GetString(12),
+            ConfidentialApproved = reader.GetBoolean(13),
+            ApprovedBy = reader.IsDBNull(14) ? null : reader.GetString(14),
+            ApprovedAt = reader.IsDBNull(15) ? null : reader.GetFieldValue<DateTimeOffset>(15),
+            LastReviewedAt = reader.IsDBNull(16) ? null : reader.GetFieldValue<DateTimeOffset>(16),
+            ExpiresAt = reader.IsDBNull(17) ? null : reader.GetFieldValue<DateTimeOffset>(17)
         };
     }
 

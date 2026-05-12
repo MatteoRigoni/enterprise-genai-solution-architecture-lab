@@ -95,7 +95,9 @@
 User → **AiSa.Host** → Retriever → **Vector Store** → Prompt Composer → **LLM Provider** → Citation Builder → Response w/ citations
 
 ### 2. Document Ingestion Flow
-Admin → **AiSa.Host** → Document Ingestion Pipeline → **Vector Store**
+Admin → **AiSa.Host** (`POST/PUT /api/documents`, multipart) → validate file + **governance** (classification, owner, confidential approval metadata) → **content guard** (pattern-based reject; no raw content in logs) → **Document Ingestion Pipeline** (chunk → embed) → **Vector Store** + **Document Metadata Store** with lineage (**source id**, **version**, **classification**, **indexedAt** on each chunk).
+
+**Lifecycle (see docs/governance.md):** updating a document re-ingests under a new `documentId`, deprecates the prior version in metadata, and removes old vectors for the previous id. Retire/delete removes vectors by `sourceId` and updates metadata. Staleness uses optional `expiresAt` / `lastReviewedAt` on document metadata for policy and future retrieval UX.
 
 ### 3. Tool Calling Flow
 User → **AiSa.Host** → Tool Router (validation) → **LLM Provider** → Tool execution → Response
@@ -129,8 +131,8 @@ User → **AiSa.Host** (`/api/chat`) → Auth context load → **MCP Registry** 
 ### Document Endpoints
 
 **POST /api/documents** - Upload and ingest document
-- Request: `multipart/form-data` with `file` field (`.txt`, `.csv`)
-- Response: includes `dedupStatus` (`new|updated|unchanged`), `version`, and `contentHash`
+- Request: `multipart/form-data` with `file` (`.txt`, `.csv`) and governance fields: `classification` (Public|Internal|Confidential|Restricted), `owner` (required), optional `sourceType`, `confidentialApproved` / `approvedBy` (required for Confidential), optional `lastReviewedAt` / `expiresAt` (ISO-8601)
+- Response: includes `dedupStatus` (`new|updated|unchanged`), `version`, `contentHash`, and governance fields echoed (e.g. `classification`, `owner`)
 - Rate limit: 5 uploads/minute
 
 **GET /api/documents** - List all ingested documents

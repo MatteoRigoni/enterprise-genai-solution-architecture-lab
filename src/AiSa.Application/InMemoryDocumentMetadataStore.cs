@@ -44,7 +44,15 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
                     PreviousVersionId = prevMetadata.PreviousVersionId,
                     IsDeprecated = true,
                     SourceNameNormalized = prevMetadata.SourceNameNormalized,
-                    ContentHash = prevMetadata.ContentHash
+                    ContentHash = prevMetadata.ContentHash,
+                    Classification = prevMetadata.Classification,
+                    Owner = prevMetadata.Owner,
+                    SourceType = prevMetadata.SourceType,
+                    ConfidentialApproved = prevMetadata.ConfidentialApproved,
+                    ApprovedBy = prevMetadata.ApprovedBy,
+                    ApprovedAt = prevMetadata.ApprovedAt,
+                    LastReviewedAt = prevMetadata.LastReviewedAt,
+                    ExpiresAt = prevMetadata.ExpiresAt
                 };
                 _documents[existingLatest.DocumentId] = deprecatedMetadata;
             }
@@ -61,7 +69,15 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
             PreviousVersionId = previousVersionId,
             IsDeprecated = false,
             SourceNameNormalized = normalizedSourceName,
-            ContentHash = result.ContentHash
+            ContentHash = result.ContentHash,
+            Classification = result.Classification,
+            Owner = result.Owner,
+            SourceType = result.SourceType,
+            ConfidentialApproved = result.ConfidentialApproved,
+            ApprovedBy = result.ApprovedBy,
+            ApprovedAt = result.ApprovedAt,
+            LastReviewedAt = result.LastReviewedAt,
+            ExpiresAt = result.ExpiresAt
         };
 
         _documents.AddOrUpdate(
@@ -110,11 +126,19 @@ public class InMemoryDocumentMetadataStore : IDocumentMetadataStore
                 ChunkCount = metadata.ChunkCount,
                 IndexedAt = metadata.IndexedAt,
                 Status = metadata.Status,
-                    Version = metadata.Version,
-                    PreviousVersionId = metadata.PreviousVersionId,
-                    IsDeprecated = true,
-                    SourceNameNormalized = metadata.SourceNameNormalized,
-                    ContentHash = metadata.ContentHash
+                Version = metadata.Version,
+                PreviousVersionId = metadata.PreviousVersionId,
+                IsDeprecated = true,
+                SourceNameNormalized = metadata.SourceNameNormalized,
+                ContentHash = metadata.ContentHash,
+                Classification = metadata.Classification,
+                Owner = metadata.Owner,
+                SourceType = metadata.SourceType,
+                ConfidentialApproved = metadata.ConfidentialApproved,
+                ApprovedBy = metadata.ApprovedBy,
+                ApprovedAt = metadata.ApprovedAt,
+                LastReviewedAt = metadata.LastReviewedAt,
+                ExpiresAt = metadata.ExpiresAt
             };
             _documents[documentId] = deprecatedMetadata;
         }

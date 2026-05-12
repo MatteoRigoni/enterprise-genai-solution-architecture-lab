@@ -45,6 +45,22 @@ public class IngestionResult
     /// Used for idempotency and deduplication.
     /// </summary>
     public string? ContentHash { get; init; }
+
+    public DataClassification Classification { get; init; } = DataClassification.Internal;
+
+    public string Owner { get; init; } = string.Empty;
+
+    public string SourceType { get; init; } = "file";
+
+    public bool ConfidentialApproved { get; init; }
+
+    public string? ApprovedBy { get; init; }
+
+    public DateTimeOffset? ApprovedAt { get; init; }
+
+    public DateTimeOffset? LastReviewedAt { get; init; }
+
+    public DateTimeOffset? ExpiresAt { get; init; }
 }
 
 /// <summary>

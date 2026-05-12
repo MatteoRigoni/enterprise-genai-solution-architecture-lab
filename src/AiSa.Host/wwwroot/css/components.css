@@ -1196,5 +1196,59 @@ html.theme-light .portal-table tbody tr:hover td {
     background-color: rgba(91, 141, 239, 0.08);
 }
 
+.governance-list {
+    margin: 0;
+    padding-left: var(--s-5);
+    line-height: 1.55;
+}
 
+.governance-list li + li {
+    margin-top: var(--s-2);
+}
+
+.governance-json {
+    margin: 0;
+    padding: var(--s-3);
+    border-radius: var(--r-1);
+    background: var(--bg-1);
+    border: 1px solid var(--border-0);
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.link-inline {
+    color: var(--accent-primary);
+    font-weight: 500;
+}
+
+.governance-upload-meta {
+    margin-bottom: var(--s-3);
+}
+
+.governance-form-grid {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: var(--s-3);
+    align-items: center;
+}
+
+.gov-label {
+    font-size: 0.9rem;
+    color: var(--text-1);
+}
+
+.gov-select {
+    padding: var(--s-2) var(--s-3);
+    border-radius: var(--r-1);
+    border: 1px solid var(--border-0);
+    background: var(--bg-1);
+    color: var(--text-0);
+    max-width: 20rem;
+}
+
+.gov-field {
+    max-width: 24rem;
+}
 

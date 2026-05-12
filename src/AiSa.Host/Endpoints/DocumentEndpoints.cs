@@ -136,8 +136,20 @@ internal static class DocumentEndpoints
                             chunkCount = existingLatest.ChunkCount,
                             indexedAt = existingLatest.IndexedAt,
                             contentHash,
+                            classification = existingLatest.Classification.ToString(),
+                            owner = existingLatest.Owner,
+                            sourceType = existingLatest.SourceType,
                             errorMessage = (string?)null
                         });
+                    }
+
+                    var nextVersion = existingLatest != null ? existingLatest.Version + 1 : 1;
+                    if (!DocumentFormGovernance.TryParse(form, nextVersion, out var governance, out var governanceError))
+                    {
+                        return Results.Problem(
+                            statusCode: StatusCodes.Status400BadRequest,
+                            title: "Bad Request",
+                            detail: governanceError ?? "Invalid governance fields.");
                     }
 
                     if (existingLatest != null)
@@ -156,6 +168,7 @@ internal static class DocumentEndpoints
                         sourceId,
                         sourceName,
                         updateExisting: existingLatest != null,
+                        governance,
                         cancellationToken);
 
                     var metadataResult = new IngestionResult
@@ -167,7 +180,15 @@ internal static class DocumentEndpoints
                         ErrorMessage = ingestionResult.ErrorMessage,
                         CompletedAt = ingestionResult.CompletedAt,
                         SourceNameNormalized = sourceNameNormalized,
-                        ContentHash = contentHash
+                        ContentHash = contentHash,
+                        Classification = ingestionResult.Classification,
+                        Owner = ingestionResult.Owner,
+                        SourceType = ingestionResult.SourceType,
+                        ConfidentialApproved = ingestionResult.ConfidentialApproved,
+                        ApprovedBy = ingestionResult.ApprovedBy,
+                        ApprovedAt = ingestionResult.ApprovedAt,
+                        LastReviewedAt = ingestionResult.LastReviewedAt,
+                        ExpiresAt = ingestionResult.ExpiresAt
                     };
 
                     // Store metadata (deprecates previous version if same source name)
@@ -194,6 +215,14 @@ internal static class DocumentEndpoints
                         chunkCount = ingestionResult.ChunkCount,
                         indexedAt = ingestionResult.CompletedAt,
                         contentHash,
+                        classification = ingestionResult.Classification.ToString(),
+                        owner = ingestionResult.Owner,
+                        sourceType = ingestionResult.SourceType,
+                        confidentialApproved = ingestionResult.ConfidentialApproved,
+                        approvedBy = ingestionResult.ApprovedBy,
+                        approvedAt = ingestionResult.ApprovedAt,
+                        lastReviewedAt = ingestionResult.LastReviewedAt,
+                        expiresAt = ingestionResult.ExpiresAt,
                         errorMessage = ingestionResult.ErrorMessage
                     };
 
@@ -281,7 +310,15 @@ internal static class DocumentEndpoints
                         contentHash = d.ContentHash,
                         chunkCount = d.ChunkCount,
                         indexedAt = d.IndexedAt,
-                        status = d.Status.ToString().ToLowerInvariant()
+                        status = d.Status.ToString().ToLowerInvariant(),
+                        classification = d.Classification.ToString(),
+                        owner = d.Owner,
+                        sourceType = d.SourceType,
+                        confidentialApproved = d.ConfidentialApproved,
+                        approvedBy = d.ApprovedBy,
+                        approvedAt = d.ApprovedAt,
+                        lastReviewedAt = d.LastReviewedAt,
+                        expiresAt = d.ExpiresAt
                     }).ToList();
 
                     return Results.Ok(response);
@@ -366,6 +403,15 @@ internal static class DocumentEndpoints
                         detail: "No file provided. Use form field name 'file'.");
                 }
 
+                var putNextVersion = existingDoc.Version + 1;
+                if (!DocumentFormGovernance.TryParse(form, putNextVersion, out var putGovernance, out var putGovError))
+                {
+                    return Results.Problem(
+                        statusCode: StatusCodes.Status400BadRequest,
+                        title: "Bad Request",
+                        detail: putGovError ?? "Invalid governance fields.");
+                }
+
                 // Validate file type
                 var allowedExtensions = new[] { ".txt", ".csv" };
                 var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -419,6 +465,7 @@ internal static class DocumentEndpoints
                         newSourceId,
                         sanitizedFileName,
                         updateExisting: true,
+                        putGovernance,
                         cancellationToken);
 
                     var metadataResult = new IngestionResult
@@ -430,7 +477,15 @@ internal static class DocumentEndpoints
                         ErrorMessage = ingestionResult.ErrorMessage,
                         CompletedAt = ingestionResult.CompletedAt,
                         SourceNameNormalized = sourceNameNormalized,
-                        ContentHash = contentHash
+                        ContentHash = contentHash,
+                        Classification = ingestionResult.Classification,
+                        Owner = ingestionResult.Owner,
+                        SourceType = ingestionResult.SourceType,
+                        ConfidentialApproved = ingestionResult.ConfidentialApproved,
+                        ApprovedBy = ingestionResult.ApprovedBy,
+                        ApprovedAt = ingestionResult.ApprovedAt,
+                        LastReviewedAt = ingestionResult.LastReviewedAt,
+                        ExpiresAt = ingestionResult.ExpiresAt
                     };
 
                     // Store metadata (versioning handled in metadata store)
@@ -457,7 +512,15 @@ internal static class DocumentEndpoints
                         chunkCount = ingestionResult.ChunkCount,
                         indexedAt = ingestionResult.CompletedAt,
                         contentHash,
-                        previousVersionId = documentId
+                        previousVersionId = documentId,
+                        classification = ingestionResult.Classification.ToString(),
+                        owner = ingestionResult.Owner,
+                        sourceType = ingestionResult.SourceType,
+                        confidentialApproved = ingestionResult.ConfidentialApproved,
+                        approvedBy = ingestionResult.ApprovedBy,
+                        approvedAt = ingestionResult.ApprovedAt,
+                        lastReviewedAt = ingestionResult.LastReviewedAt,
+                        expiresAt = ingestionResult.ExpiresAt
                     };
 
                     return Results.Ok(response);

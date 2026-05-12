@@ -59,9 +59,9 @@ public class PgVectorVectorStore : IVectorStore
         foreach (var chunk in list)
         {
             await using var cmd = new NpgsqlCommand(
-                $"INSERT INTO {TableName} (chunk_id, chunk_index, content, embedding, source_id, source_name, indexed_at) " +
-                "VALUES ($1, $2, $3, $4, $5, $6, $7) " +
-                "ON CONFLICT (chunk_id) DO UPDATE SET chunk_index = $2, content = $3, embedding = $4, source_id = $5, source_name = $6, indexed_at = $7",
+                $"INSERT INTO {TableName} (chunk_id, chunk_index, content, embedding, source_id, source_name, indexed_at, document_version, classification) " +
+                "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) " +
+                "ON CONFLICT (chunk_id) DO UPDATE SET chunk_index = $2, content = $3, embedding = $4, source_id = $5, source_name = $6, indexed_at = $7, document_version = $8, classification = $9",
                 conn);
             cmd.Parameters.AddWithValue(chunk.ChunkId);
             cmd.Parameters.AddWithValue(chunk.ChunkIndex);
@@ -70,6 +70,8 @@ public class PgVectorVectorStore : IVectorStore
             cmd.Parameters.AddWithValue(chunk.SourceId);
             cmd.Parameters.AddWithValue(chunk.SourceName);
             cmd.Parameters.AddWithValue(chunk.IndexedAt);
+            cmd.Parameters.AddWithValue(chunk.DocumentVersion);
+            cmd.Parameters.AddWithValue(chunk.Classification);
             await cmd.ExecuteNonQueryAsync(timeoutCts.Token).ConfigureAwait(false);
         }
 
@@ -93,7 +95,7 @@ public class PgVectorVectorStore : IVectorStore
         var results = new List<SearchResult>();
         await using var conn = await _dataSource.OpenConnectionAsync(timeoutCts.Token).ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand(
-            $"SELECT chunk_id, chunk_index, content, source_id, source_name, indexed_at, embedding <=> $1 AS distance " +
+            $"SELECT chunk_id, chunk_index, content, source_id, source_name, indexed_at, document_version, classification, embedding <=> $1 AS distance " +
             $"FROM {TableName} ORDER BY embedding <=> $1 LIMIT $2",
             conn);
         cmd.Parameters.AddWithValue(new Vector(queryVector));
@@ -111,9 +113,11 @@ public class PgVectorVectorStore : IVectorStore
                     Vector = Array.Empty<float>(),
                     SourceId = reader.GetString(3),
                     SourceName = reader.GetString(4),
-                    IndexedAt = reader.GetFieldValue<DateTimeOffset>(5)
+                    IndexedAt = reader.GetFieldValue<DateTimeOffset>(5),
+                    DocumentVersion = reader.GetInt32(6),
+                    Classification = reader.GetString(7)
                 };
-                var distance = reader.GetDouble(6);
+                var distance = reader.GetDouble(8);
                 var score = 1.0 - (distance / 2.0);
                 results.Add(new SearchResult { Chunk = chunk, Score = score });
             }
@@ -163,6 +167,12 @@ public class PgVectorVectorStore : IVectorStore
                     indexed_at TIMESTAMPTZ NOT NULL
                 )", conn))
                 await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+            await using (var mig = new NpgsqlCommand($@"
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS document_version INTEGER NOT NULL DEFAULT 1;
+                ALTER TABLE {TableName} ADD COLUMN IF NOT EXISTS classification TEXT NOT NULL DEFAULT 'Internal';
+                ", conn))
+                await mig.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
             await using (var cmd = new NpgsqlCommand(
                 $"CREATE INDEX IF NOT EXISTS idx_{TableName}_embedding ON {TableName} USING hnsw (embedding vector_cosine_ops)",

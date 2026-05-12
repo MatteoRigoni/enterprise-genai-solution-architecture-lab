@@ -19,6 +19,10 @@ public partial class Documents
     private bool isTriggeringFileInput = false;
     private IBrowserFile? selectedFile = null;
     private List<DocumentItem>? documents = null;
+    private string classification = "Internal";
+    private string owner = "PlatformTeam";
+    private bool confidentialApproved;
+    private string approvedBy = string.Empty;
 
     [Inject]
     private HttpClient Http { get; set; } = default!;
@@ -125,6 +129,14 @@ public partial class Documents
                 using var content = new MultipartFormDataContent();
                 using var fileStream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
                 content.Add(new StreamContent(fileStream), "file", selectedFile.Name);
+                content.Add(new StringContent(classification), "classification");
+                content.Add(new StringContent(owner), "owner");
+                content.Add(new StringContent("file"), "sourceType");
+                if (string.Equals(classification, "Confidential", StringComparison.OrdinalIgnoreCase))
+                {
+                    content.Add(new StringContent(confidentialApproved ? "true" : "false"), "confidentialApproved");
+                    content.Add(new StringContent(approvedBy), "approvedBy");
+                }
 
                 var response = await Http.PostAsync("/api/documents", content, cancellationToken);
 
@@ -138,6 +150,12 @@ public partial class Documents
                             ToastService.ShowSuccess(
                                 $"Document '{result.sourceName}' ingested successfully with {result.chunkCount} chunks",
                                 "Upload Successful");
+                        }
+                        else if (result.status == "unchanged")
+                        {
+                            ToastService.ShowInfo(
+                                $"Document '{result.sourceName}' unchanged (same content hash).",
+                                "No update needed");
                         }
                         else
                         {
@@ -276,6 +294,8 @@ public class DocumentItem
     public int chunkCount { get; set; }
     public DateTimeOffset indexedAt { get; set; }
     public string status { get; set; } = string.Empty;
+    public string classification { get; set; } = "Internal";
+    public string owner { get; set; } = string.Empty;
 }
 
 public class UploadResult

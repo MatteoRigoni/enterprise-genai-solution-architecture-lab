@@ -39,4 +39,14 @@ public class DocumentChunk
     /// Timestamp when this chunk was indexed.
     /// </summary>
     public required DateTimeOffset IndexedAt { get; init; }
+
+    /// <summary>
+    /// Document version at ingestion (lineage).
+    /// </summary>
+    public int DocumentVersion { get; init; } = 1;
+
+    /// <summary>
+    /// Classification label at ingestion (string for vector store portability).
+    /// </summary>
+    public string Classification { get; init; } = nameof(DataClassification.Internal);
 }

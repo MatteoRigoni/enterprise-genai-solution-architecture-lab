@@ -15,6 +15,7 @@ public class DocumentIngestionService : IDocumentIngestionService
     private readonly IEmbeddingService _embeddingService;
     private readonly IVectorStore _vectorStore;
     private readonly IDocumentMetadataStore? _metadataStore;
+    private readonly IngestionContentGuard _contentGuard;
     private readonly ActivitySource _activitySource;
     private readonly ILogger<DocumentIngestionService> _logger;
 
@@ -22,17 +23,8 @@ public class DocumentIngestionService : IDocumentIngestionService
         IDocumentChunker chunker,
         IEmbeddingService embeddingService,
         IVectorStore vectorStore,
-        ActivitySource activitySource,
-        ILogger<DocumentIngestionService> logger)
-        : this(chunker, embeddingService, vectorStore, null, activitySource, logger)
-    {
-    }
-
-    public DocumentIngestionService(
-        IDocumentChunker chunker,
-        IEmbeddingService embeddingService,
-        IVectorStore vectorStore,
         IDocumentMetadataStore? metadataStore,
+        IngestionContentGuard contentGuard,
         ActivitySource activitySource,
         ILogger<DocumentIngestionService> logger)
     {
@@ -40,24 +32,32 @@ public class DocumentIngestionService : IDocumentIngestionService
         _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
         _vectorStore = vectorStore ?? throw new ArgumentNullException(nameof(vectorStore));
         _metadataStore = metadataStore;
+        _contentGuard = contentGuard ?? throw new ArgumentNullException(nameof(contentGuard));
         _activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IngestionResult> IngestAsync(
+    public Task<IngestionResult> IngestAsync(
         Stream stream,
         string sourceId,
         string sourceName,
-        CancellationToken cancellationToken = default)
-    {
-        return await IngestAsync(stream, sourceId, sourceName, updateExisting: false, cancellationToken);
-    }
+        CancellationToken cancellationToken = default) =>
+        IngestAsync(stream, sourceId, sourceName, updateExisting: false, governance: null, cancellationToken);
+
+    public Task<IngestionResult> IngestAsync(
+        Stream stream,
+        string sourceId,
+        string sourceName,
+        bool updateExisting,
+        CancellationToken cancellationToken = default) =>
+        IngestAsync(stream, sourceId, sourceName, updateExisting, governance: null, cancellationToken);
 
     public async Task<IngestionResult> IngestAsync(
         Stream stream,
         string sourceId,
         string sourceName,
         bool updateExisting,
+        IngestionGovernanceContext? governance,
         CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
@@ -67,14 +67,31 @@ public class DocumentIngestionService : IDocumentIngestionService
         activity?.SetTag("documents.sourceId", sourceId);
         activity?.SetTag("documents.sourceName", sourceName);
 
+        var gov = governance ?? IngestionGovernanceContext.Default();
+        activity?.SetTag("documents.classification", gov.Classification.ToString());
+        activity?.SetTag("documents.confidentialApproved", gov.ConfidentialApproved);
+
         try
         {
+
             // Log metadata only (ADR-0004)
             _logger.LogInformation(
-                "Starting document ingestion. SourceId: {SourceId}, SourceName: {SourceName}, UpdateExisting: {UpdateExisting}",
+                "Starting document ingestion. SourceId: {SourceId}, SourceName: {SourceName}, UpdateExisting: {UpdateExisting}, Classification: {Classification}",
                 sourceId,
                 sourceName,
-                updateExisting);
+                updateExisting,
+                gov.Classification);
+
+            if (gov.Classification == DataClassification.Restricted)
+            {
+                return Failed(sourceId, sourceName, gov, "Restricted classification cannot be indexed.");
+            }
+
+            if (gov.Classification == DataClassification.Confidential &&
+                (!gov.ConfidentialApproved || string.IsNullOrWhiteSpace(gov.ApprovedBy)))
+            {
+                return Failed(sourceId, sourceName, gov, "Confidential documents require approval and approver metadata.");
+            }
 
             // If updating existing, check for previous version
             if (updateExisting && _metadataStore != null)
@@ -96,48 +113,37 @@ public class DocumentIngestionService : IDocumentIngestionService
                 content = await reader.ReadToEndAsync(cancellationToken);
             }
 
+            if (_contentGuard.ShouldReject(content, out var guardReason))
+            {
+                _logger.LogWarning(
+                    "Document ingestion rejected by content guard. SourceId: {SourceId}, ReasonCode: {ReasonCode}",
+                    sourceId,
+                    guardReason);
+                return Failed(sourceId, sourceName, gov, "Content matched sensitive patterns and was not indexed.");
+            }
+
             if (string.IsNullOrWhiteSpace(content))
             {
-                var errorResult = new IngestionResult
-                {
-                    SourceId = sourceId,
-                    SourceName = sourceName,
-                    ChunkCount = 0,
-                    Status = IngestionStatus.Failed,
-                    ErrorMessage = "Document content is empty",
-                    CompletedAt = DateTimeOffset.UtcNow
-                };
-
                 activity?.SetTag("documents.chunkCount", 0);
                 activity?.SetTag("documents.status", "failed");
                 activity?.SetStatus(ActivityStatusCode.Error);
                 activity?.SetTag("error.message", "Document content is empty");
 
-                return errorResult;
+                return Failed(sourceId, sourceName, gov, "Document content is empty");
             }
 
             // Step 2: Chunk document
             var chunks = await _chunker.ChunkAsync(content, sourceId, sourceName, cancellationToken);
-            var chunksList = chunks.ToList();
+            var chunksList = ApplyLineage(chunks.ToList(), gov);
 
             if (!chunksList.Any())
             {
-                var errorResult = new IngestionResult
-                {
-                    SourceId = sourceId,
-                    SourceName = sourceName,
-                    ChunkCount = 0,
-                    Status = IngestionStatus.Failed,
-                    ErrorMessage = "No chunks created from document",
-                    CompletedAt = DateTimeOffset.UtcNow
-                };
-
                 activity?.SetTag("documents.chunkCount", 0);
                 activity?.SetTag("documents.status", "failed");
                 activity?.SetStatus(ActivityStatusCode.Error);
                 activity?.SetTag("error.message", "No chunks created");
 
-                return errorResult;
+                return Failed(sourceId, sourceName, gov, "No chunks created from document");
             }
 
             activity?.SetTag("documents.chunkCount", chunksList.Count);
@@ -149,21 +155,12 @@ public class DocumentIngestionService : IDocumentIngestionService
 
             if (embeddingsList.Count != chunksList.Count)
             {
-                var errorResult = new IngestionResult
-                {
-                    SourceId = sourceId,
-                    SourceName = sourceName,
-                    ChunkCount = chunksList.Count,
-                    Status = IngestionStatus.Failed,
-                    ErrorMessage = $"Embedding count mismatch: expected {chunksList.Count}, got {embeddingsList.Count}",
-                    CompletedAt = DateTimeOffset.UtcNow
-                };
-
+                var msg = $"Embedding count mismatch: expected {chunksList.Count}, got {embeddingsList.Count}";
                 activity?.SetTag("documents.status", "failed");
                 activity?.SetStatus(ActivityStatusCode.Error);
-                activity?.SetTag("error.message", errorResult.ErrorMessage);
+                activity?.SetTag("error.message", msg);
 
-                return errorResult;
+                return Failed(sourceId, sourceName, gov, msg, chunksList.Count);
             }
 
             // Step 4: Combine chunks with embeddings
@@ -177,7 +174,9 @@ public class DocumentIngestionService : IDocumentIngestionService
                     Vector = embedding,
                     SourceId = chunk.SourceId,
                     SourceName = chunk.SourceName,
-                    IndexedAt = chunk.IndexedAt
+                    IndexedAt = chunk.IndexedAt,
+                    DocumentVersion = chunk.DocumentVersion,
+                    Classification = chunk.Classification
                 };
             }).ToList();
 
@@ -196,14 +195,7 @@ public class DocumentIngestionService : IDocumentIngestionService
                 chunksList.Count,
                 duration.TotalMilliseconds);
 
-            return new IngestionResult
-            {
-                SourceId = sourceId,
-                SourceName = sourceName,
-                ChunkCount = chunksList.Count,
-                Status = IngestionStatus.Completed,
-                CompletedAt = DateTimeOffset.UtcNow
-            };
+            return Ok(sourceId, sourceName, gov, chunksList.Count);
         }
         catch (Exception ex)
         {
@@ -221,15 +213,67 @@ public class DocumentIngestionService : IDocumentIngestionService
                 sourceName,
                 duration.TotalMilliseconds);
 
-            return new IngestionResult
-            {
-                SourceId = sourceId,
-                SourceName = sourceName,
-                ChunkCount = 0,
-                Status = IngestionStatus.Failed,
-                ErrorMessage = ex.Message,
-                CompletedAt = DateTimeOffset.UtcNow
-            };
+            return Failed(sourceId, sourceName, gov, ex.Message);
         }
     }
+
+    private static List<DocumentChunk> ApplyLineage(List<DocumentChunk> chunks, IngestionGovernanceContext gov)
+    {
+        var cls = gov.Classification.ToString();
+        var ver = gov.DocumentVersion;
+        return chunks.Select(c => new DocumentChunk
+        {
+            ChunkId = c.ChunkId,
+            ChunkIndex = c.ChunkIndex,
+            Content = c.Content,
+            Vector = c.Vector,
+            SourceId = c.SourceId,
+            SourceName = c.SourceName,
+            IndexedAt = c.IndexedAt,
+            DocumentVersion = ver,
+            Classification = cls
+        }).ToList();
+    }
+
+    private static IngestionResult Ok(string sourceId, string sourceName, IngestionGovernanceContext gov, int chunkCount) =>
+        new()
+        {
+            SourceId = sourceId,
+            SourceName = sourceName,
+            ChunkCount = chunkCount,
+            Status = IngestionStatus.Completed,
+            CompletedAt = DateTimeOffset.UtcNow,
+            Classification = gov.Classification,
+            Owner = gov.Owner,
+            SourceType = gov.SourceType,
+            ConfidentialApproved = gov.ConfidentialApproved,
+            ApprovedBy = gov.ApprovedBy,
+            ApprovedAt = gov.ApprovedAt,
+            LastReviewedAt = gov.LastReviewedAt,
+            ExpiresAt = gov.ExpiresAt
+        };
+
+    private static IngestionResult Failed(
+        string sourceId,
+        string sourceName,
+        IngestionGovernanceContext gov,
+        string message,
+        int chunkCount = 0) =>
+        new()
+        {
+            SourceId = sourceId,
+            SourceName = sourceName,
+            ChunkCount = chunkCount,
+            Status = IngestionStatus.Failed,
+            ErrorMessage = message,
+            CompletedAt = DateTimeOffset.UtcNow,
+            Classification = gov.Classification,
+            Owner = gov.Owner,
+            SourceType = gov.SourceType,
+            ConfidentialApproved = gov.ConfidentialApproved,
+            ApprovedBy = gov.ApprovedBy,
+            ApprovedAt = gov.ApprovedAt,
+            LastReviewedAt = gov.LastReviewedAt,
+            ExpiresAt = gov.ExpiresAt
+        };
 }
